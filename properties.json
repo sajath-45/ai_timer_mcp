@@ -1,0 +1,897 @@
+[
+  { "obj": 10001, "objektname": "Gabelsbergerstr. 11", "objekttypid": 2 },
+  { "obj": 10002, "objektname": "Martinweg 6", "objekttypid": 2 },
+  {
+    "obj": 10004,
+    "objektname": "Max-Köhler-Str. 13 - Maxhöhe",
+    "objekttypid": 2
+  },
+  { "obj": 10005, "objektname": "Aidenbacher Str. 2", "objekttypid": 2 },
+  { "obj": 10006, "objektname": "Aidenbacher Str. 4", "objekttypid": 2 },
+  { "obj": 10007, "objektname": "Christinastraße 38", "objekttypid": 2 },
+  {
+    "obj": 10008,
+    "objektname": "Frauenhoferstr. 2-4 - St. Josef Stift",
+    "objekttypid": 2
+  },
+  { "obj": 10009, "objektname": "Kornblumenweg 5", "objekttypid": 1 },
+  { "obj": 10010, "objektname": "Am Lindenfeld 2", "objekttypid": 2 },
+  { "obj": 10012, "objektname": "Jahnstr. 2", "objekttypid": 2 },
+  {
+    "obj": 10013,
+    "objektname": "Steinreuther Str. 7 - Haus Sommer",
+    "objekttypid": 2
+  },
+  { "obj": 10016, "objektname": "Ratoldweg 1", "objekttypid": 2 },
+  { "obj": 10017, "objektname": "Bgm.-Nöbauer-Str. 6", "objekttypid": 2 },
+  { "obj": 10019, "objektname": "Widumweg 1,3,5,7", "objekttypid": 2 },
+  {
+    "obj": 10020,
+    "objektname": "Kronberger Str. 15 Kronberghof",
+    "objekttypid": 2
+  },
+  { "obj": 10021, "objektname": "Carossastr. 1", "objekttypid": 2 },
+  { "obj": 10022, "objektname": "Klausenweg 9", "objekttypid": 2 },
+  { "obj": 10024, "objektname": "Haidzinger Str. 63", "objekttypid": 2 },
+  { "obj": 10025, "objektname": "Prof.-Baumgartner-Str. 6", "objekttypid": 2 },
+  { "obj": 10027, "objektname": "Bruder-Konrad-Weg 17+19", "objekttypid": 2 },
+  { "obj": 10028, "objektname": "Herzog-Arnulf-Str. 8", "objekttypid": 2 },
+  { "obj": 10029, "objektname": "Inhamer Str. 19a", "objekttypid": 2 },
+  { "obj": 10030, "objektname": "Simbacher Str. 31, 31 a", "objekttypid": 2 },
+  { "obj": 10032, "objektname": "Plinganser Str. 20", "objekttypid": 2 },
+  { "obj": 10033, "objektname": "Augsburger Str. 19", "objekttypid": 2 },
+  { "obj": 10036, "objektname": "Widumweg 16,18,20", "objekttypid": 2 },
+  {
+    "obj": 10038,
+    "objektname": "Haidzinger Straße 46 u. 48",
+    "objekttypid": 2
+  },
+  { "obj": 10039, "objektname": "Passauer Str. 90-92", "objekttypid": 2 },
+  { "obj": 10040, "objektname": "Bajuwarenstr. 51-53", "objekttypid": 2 },
+  {
+    "obj": 10041,
+    "objektname": "Tiefgarage Pass.Str./Bajuwarenstr.",
+    "objekttypid": 2
+  },
+  { "obj": 10043, "objektname": "Innstraße 82 a + b", "objekttypid": 2 },
+  { "obj": 10044, "objektname": "Prof.-Baumgartner-Str. 19", "objekttypid": 2 },
+  { "obj": 10047, "objektname": "Marktplatz 15 - Baronhof", "objekttypid": 2 },
+  { "obj": 10048, "objektname": "Steinwiesstr. 13", "objekttypid": 2 },
+  { "obj": 10051, "objektname": "Spitalhofstr. 20, 20a", "objekttypid": 2 },
+  { "obj": 10052, "objektname": "Färbergasse 1", "objekttypid": 2 },
+  { "obj": 10053, "objektname": "Oesterlingweg 7", "objekttypid": 2 },
+  { "obj": 10054, "objektname": "Kellerbergstr. 8", "objekttypid": 2 },
+  { "obj": 10055, "objektname": "Kellerbergstr. 12", "objekttypid": 2 },
+  { "obj": 10056, "objektname": "Kellerbergstraße 2-4", "objekttypid": 2 },
+  { "obj": 10057, "objektname": "Schenkermaierweg 15 + 17", "objekttypid": 2 },
+  { "obj": 10061, "objektname": "Nibelungenstraße 27", "objekttypid": 2 },
+  { "obj": 10065, "objektname": "Kirchplatz 2 a", "objekttypid": 1 },
+  { "obj": 10066, "objektname": "Rapotoweg 7", "objekttypid": 2 },
+  { "obj": 10067, "objektname": "Waldstraße 1", "objekttypid": 2 },
+  { "obj": 10069, "objektname": "Schlupfinger Str. 18+20", "objekttypid": 2 },
+  { "obj": 10070, "objektname": "Alte Straße 6", "objekttypid": 2 },
+  {
+    "obj": 10071,
+    "objektname": "Tettenweiser Str. 23a, 23b, 25",
+    "objekttypid": 2
+  },
+  { "obj": 10072, "objektname": "Steffelsöd 15,17,19", "objekttypid": 2 },
+  { "obj": 10074, "objektname": "Betty-Greif-Str. 2", "objekttypid": 2 },
+  { "obj": 10075, "objektname": "St.-Augustinus-Str. 36", "objekttypid": 2 },
+  { "obj": 10076, "objektname": "Mitterweg 7", "objekttypid": 1 },
+  {
+    "obj": 10078,
+    "objektname": "Bgm.-Nöbauer-Str. 2 u. 4 - Haus Leithenblick",
+    "objekttypid": 2
+  },
+  {
+    "obj": 10080,
+    "objektname": "Prof.-Baumgartner-Str. 17, Haus Wandervogel",
+    "objekttypid": 2
+  },
+  { "obj": 10081, "objektname": "Grotthamer Str. 17", "objekttypid": 2 },
+  { "obj": 10082, "objektname": "Königsberger Straße 13", "objekttypid": 2 },
+  { "obj": 10084, "objektname": "Birketweg 31", "objekttypid": 2 },
+  { "obj": 10086, "objektname": "Passauer Str. 49", "objekttypid": 2 },
+  { "obj": 10088, "objektname": "Am Reiserfeld 5 u. 7", "objekttypid": 2 },
+  {
+    "obj": 10089,
+    "objektname": "Göschlweg 10 - Haus Capri I",
+    "objekttypid": 2
+  },
+  {
+    "obj": 10090,
+    "objektname": "Göschlweg 12-14 - Haus Capri II",
+    "objekttypid": 2
+  },
+  { "obj": 10092, "objektname": "Mahlgassinger Weg 30 a", "objekttypid": 2 },
+  { "obj": 10093, "objektname": "Mahlgassinger Weg 30 b", "objekttypid": 2 },
+  { "obj": 10096, "objektname": "Liebigstrasse 6", "objekttypid": 2 },
+  {
+    "obj": 10097,
+    "objektname": "Griesbacher Str. 3-11 - Mühlbachhof",
+    "objekttypid": 2
+  },
+  { "obj": 10099, "objektname": "Leoprechtingstr. 21", "objekttypid": 2 },
+  { "obj": 10100, "objektname": "PHG Mieten - ET", "objekttypid": 2 },
+  {
+    "obj": 10102,
+    "objektname": "Rottalstr. 3 - Thermenblick",
+    "objekttypid": 2
+  },
+  { "obj": 10104, "objektname": "Christinastr. 40", "objekttypid": 2 },
+  { "obj": 10111, "objektname": "Bajuwarenstraße 57", "objekttypid": 1 },
+  { "obj": 10112, "objektname": "Eichenweg 3-5", "objekttypid": 1 },
+  { "obj": 10114, "objektname": "Reitschusterfeld 7", "objekttypid": 1 },
+  { "obj": 10116, "objektname": "Sinzendorfstr. 11", "objekttypid": 2 },
+  { "obj": 10118, "objektname": "Hochriesstr. 9", "objekttypid": 2 },
+  {
+    "obj": 10119,
+    "objektname": "Ebersberg, Arberstr. Rachelstr.",
+    "objekttypid": 2
+  },
+  { "obj": 10120, "objektname": "Hauptstr. 1", "objekttypid": 2 },
+  {
+    "obj": 10122,
+    "objektname": "Pfarrer-Stirner-Str. 3 - Schloss Kirchham",
+    "objekttypid": 2
+  },
+  { "obj": 10123, "objektname": "Abt-Walther-Str. 1", "objekttypid": 2 },
+  { "obj": 10127, "objektname": "Kreuzberger Weg 13", "objekttypid": 2 },
+  { "obj": 10128, "objektname": "Irsham 2", "objekttypid": 2 },
+  {
+    "obj": 10129,
+    "objektname": "Obere Inntalstr.32 a-c - Kastanienhof Egglfing",
+    "objekttypid": 2
+  },
+  { "obj": 10130, "objektname": "Gartenstraße 4a - 4c", "objekttypid": 2 },
+  {
+    "obj": 10131,
+    "objektname": "Betreibergesellschaft Schwimmbad",
+    "objekttypid": 2
+  },
+  { "obj": 10132, "objektname": "Passauer Str. 16", "objekttypid": 2 },
+  { "obj": 10133, "objektname": "Mahlgassinger Weg 26", "objekttypid": 2 },
+  { "obj": 10134, "objektname": "Pfarrkirchener Str. 16", "objekttypid": 2 },
+  { "obj": 10136, "objektname": "Grotthamer Str. 35", "objekttypid": 2 },
+  { "obj": 10138, "objektname": "Sonnenstr. 9 a-d", "objekttypid": 2 },
+  { "obj": 10139, "objektname": "Postmünsterer Str. 10 a", "objekttypid": 2 },
+  { "obj": 10140, "objektname": "Ringstraße 4", "objekttypid": 2 },
+  {
+    "obj": 10141,
+    "objektname": "Aloisenweg 5 - Haus Quellenblick",
+    "objekttypid": 2
+  },
+  { "obj": 10143, "objektname": "Neuwiesenweg 26/28", "objekttypid": 2 },
+  { "obj": 10145, "objektname": "Voglmeierstr. 3 u. 3 1/2", "objekttypid": 2 },
+  { "obj": 10146, "objektname": "Josef-Philipp-Str. 38/40", "objekttypid": 2 },
+  { "obj": 10147, "objektname": "Am Bergsteig 8 und 9", "objekttypid": 2 },
+  {
+    "obj": 10148,
+    "objektname": "Brunnenstr.9-11/Gärtnerei 2-10 Liko II",
+    "objekttypid": 2
+  },
+  { "obj": 10149, "objektname": "Brunnenstr. 2 - Liko 01", "objekttypid": 2 },
+  { "obj": 10151, "objektname": "Passauer Str. 22", "objekttypid": 1 },
+  { "obj": 10152, "objektname": "Fürstenacker Str. 10", "objekttypid": 2 },
+  { "obj": 10157, "objektname": "Finkenstr. 17 u. 19", "objekttypid": 2 },
+  { "obj": 10159, "objektname": "Arnstorfer Str. 24 + 26", "objekttypid": 2 },
+  { "obj": 10160, "objektname": "August-Wischemeyer-Str. 1", "objekttypid": 1 },
+  { "obj": 10161, "objektname": "Passauer Str. 1", "objekttypid": 1 },
+  { "obj": 10165, "objektname": "Berzeliusstr. 3-11", "objekttypid": 2 },
+  {
+    "obj": 10168,
+    "objektname": "Bachstr. 29 - Thermen Residenz",
+    "objekttypid": 2
+  },
+  { "obj": 10169, "objektname": "Scheibmeirstr. 51", "objekttypid": 2 },
+  { "obj": 10170, "objektname": "Ragern 18 a + 18 b", "objekttypid": 2 },
+  { "obj": 10171, "objektname": "Brunnenstr. 1+3 Liko 16", "objekttypid": 2 },
+  {
+    "obj": 10172,
+    "objektname": "Gibbenhey 5/Stockumer Str. 413 SEV",
+    "objekttypid": 3
+  },
+  { "obj": 10173, "objektname": "Sonnenweg 7", "objekttypid": 2 },
+  { "obj": 10174, "objektname": "Kantstr. 3", "objekttypid": 2 },
+  {
+    "obj": 10177,
+    "objektname": "Gibbenhey 5, Stockumer Str. 413",
+    "objekttypid": 2
+  },
+  {
+    "obj": 10178,
+    "objektname": "Untere Inntalstraße 78 - Haus Bern",
+    "objekttypid": 2
+  },
+  {
+    "obj": 10180,
+    "objektname": "Franz-Xaver-Brunner-Str. 4 Haus Sonnenhang",
+    "objekttypid": 2
+  },
+  { "obj": 10183, "objektname": "Am Reiserfeld 2", "objekttypid": 2 },
+  { "obj": 10185, "objektname": "Birkenallee 8", "objekttypid": 2 },
+  { "obj": 10186, "objektname": "Klosterstr. 5 / 7", "objekttypid": 2 },
+  { "obj": 10188, "objektname": "Am Kastenfeld 20a", "objekttypid": 1 },
+  { "obj": 10190, "objektname": "Hochriesstr. 5", "objekttypid": 2 },
+  { "obj": 10191, "objektname": "Wittelsbacher Straße 4", "objekttypid": 2 },
+  { "obj": 10192, "objektname": "Prof.-Baumgartner-Str. 2", "objekttypid": 2 },
+  {
+    "obj": 10193,
+    "objektname": "Asperweg 5 + 7 - Fasanenhof",
+    "objekttypid": 2
+  },
+  {
+    "obj": 10194,
+    "objektname": "Am Steingraben 2 - Vogelweide",
+    "objekttypid": 2
+  },
+  { "obj": 10199, "objektname": "Max-Köhler-Straße 19", "objekttypid": 2 },
+  { "obj": 10200, "objektname": "PHG Mieten - Mieter", "objekttypid": 3 },
+  { "obj": 10203, "objektname": "Veteranenstr. 10-13 SEV", "objekttypid": 3 },
+  { "obj": 10204, "objektname": "Max-Köhler-Str. 13 SEV", "objekttypid": 3 },
+  { "obj": 10205, "objektname": "Aidenbacher Str. 2 SEV", "objekttypid": 3 },
+  {
+    "obj": 10207,
+    "objektname": "Mietkonto Borgsdorf Bahnhofstr. 12",
+    "objekttypid": 1
+  },
+  {
+    "obj": 10217,
+    "objektname": "Fallmerayerstr. 30 MV Hendlmaier",
+    "objekttypid": 3
+  },
+  {
+    "obj": 10218,
+    "objektname": "Fallmerayerstr. 30 MV Hendlmaier/Weinthaler",
+    "objekttypid": 3
+  },
+  {
+    "obj": 10223,
+    "objektname": "Passauer Str. 100 - 104 SEV",
+    "objekttypid": 3
+  },
+  { "obj": 10243, "objektname": "Innstraße 82 a+b SEV", "objekttypid": 3 },
+  { "obj": 10267, "objektname": "Bänschstr. 45 - SEV", "objekttypid": 3 },
+  { "obj": 10280, "objektname": "Otto-Suhr-Allee 18/20 SEV", "objekttypid": 3 },
+  { "obj": 10281, "objektname": "Waldeyerstr. 1 A - SEV", "objekttypid": 3 },
+  {
+    "obj": 10284,
+    "objektname": "MV Kirchenweg 10a-b - Dr.Reichenberger",
+    "objekttypid": 1
+  },
+  { "obj": 10290, "objektname": "Berlin SEV", "objekttypid": 3 },
+  {
+    "obj": 10299,
+    "objektname": "Thumbach Ludwig, Max-Köhler-Str. 13, Lohnkonto",
+    "objekttypid": 1
+  },
+  {
+    "obj": 10332,
+    "objektname": "Winzererstr. 170-178 (3302)",
+    "objekttypid": 2
+  },
+  { "obj": 10333, "objektname": "Winzererstr. 180 (3303)", "objekttypid": 2 },
+  { "obj": 10334, "objektname": "Winzererstr. 182 (3304)", "objekttypid": 2 },
+  { "obj": 10391, "objektname": "Sporthotel Reutmühle GmbH", "objekttypid": 2 },
+  { "obj": 10500, "objektname": "Eisenbahnstraße 49", "objekttypid": 1 },
+  { "obj": 10501, "objektname": "Fasanenallee 42-50", "objekttypid": 2 },
+  { "obj": 10502, "objektname": "Raiffeisenstr. 3", "objekttypid": 2 },
+  { "obj": 10503, "objektname": "Veteranenstraße 10-13", "objekttypid": 2 },
+  { "obj": 10505, "objektname": "Bachstr. 32", "objekttypid": 2 },
+  { "obj": 10506, "objektname": "Buchenstr. 5 a+b", "objekttypid": 2 },
+  { "obj": 10508, "objektname": "Anton Bruckner Str. 15", "objekttypid": 2 },
+  { "obj": 10509, "objektname": "Franz-Schildhammer-Str. 5", "objekttypid": 2 },
+  { "obj": 10510, "objektname": "Tettenweiser Str. 17", "objekttypid": 2 },
+  { "obj": 10511, "objektname": "Königbauerstr. 4", "objekttypid": 2 },
+  { "obj": 10512, "objektname": "Passauer Str. 61 a", "objekttypid": 2 },
+  { "obj": 10515, "objektname": "Am Moosgraben 29", "objekttypid": 2 },
+  { "obj": 10517, "objektname": "Fallmerayerstr. 30", "objekttypid": 2 },
+  { "obj": 10518, "objektname": "Weinzierler Str. 4", "objekttypid": 2 },
+  { "obj": 10519, "objektname": "Torstr. 80", "objekttypid": 1 },
+  { "obj": 10520, "objektname": "Tiefgarage Am Fischl 10", "objekttypid": 2 },
+  {
+    "obj": 10522,
+    "objektname": "Wilhelm-Dieß-Weg 5 - Haus am Wildpark",
+    "objekttypid": 2
+  },
+  { "obj": 10523, "objektname": "Klosterstraße 5/7 - SEV", "objekttypid": 3 },
+  { "obj": 10524, "objektname": "Hans-Carossa-Str. 2", "objekttypid": 2 },
+  { "obj": 10526, "objektname": "Bruder-Konrad Weg 9", "objekttypid": 1 },
+  { "obj": 10527, "objektname": "Am Fischl 11", "objekttypid": 2 },
+  { "obj": 10529, "objektname": "Gerlandweg 1", "objekttypid": 2 },
+  { "obj": 10530, "objektname": "Lachenmeyrstraße 7", "objekttypid": 2 },
+  {
+    "obj": 10534,
+    "objektname": "Thermalbadstr. 24 - Griesbacher Hof",
+    "objekttypid": 5
+  },
+  {
+    "obj": 10535,
+    "objektname": "Thermalbadstr. 26 - Griesbacher Hof",
+    "objekttypid": 5
+  },
+  {
+    "obj": 10536,
+    "objektname": "An der Keltenschanze 2, 4, 6, 6a - Kastanienhof",
+    "objekttypid": 2
+  },
+  {
+    "obj": 10537,
+    "objektname": "Dorfstr. 47-50, Ferienpark Altreichenau",
+    "objekttypid": 2
+  },
+  { "obj": 10538, "objektname": "Wiesenweg 5", "objekttypid": 1 },
+  {
+    "obj": 10539,
+    "objektname": "Josef-Hellmannsberger Str.11",
+    "objekttypid": 1
+  },
+  { "obj": 10540, "objektname": "Krankenhausstr. 3", "objekttypid": 1 },
+  {
+    "obj": 10541,
+    "objektname": "Bachstraße 36 / 38, Eichengarten",
+    "objekttypid": 2
+  },
+  { "obj": 10545, "objektname": "Stadtplatz 84", "objekttypid": 1 },
+  { "obj": 10546, "objektname": "Adolf-Kolping-Str. 15", "objekttypid": 1 },
+  { "obj": 10548, "objektname": "Passauer Str. 5", "objekttypid": 1 },
+  {
+    "obj": 10550,
+    "objektname": "Am Dorfplatz 6 - Am Kirchplatz 15, Uttlau",
+    "objekttypid": 2
+  },
+  { "obj": 10551, "objektname": "St.-Veit-Str. 57 a", "objekttypid": 2 },
+  { "obj": 10552, "objektname": "Neuer Marktplatz 17", "objekttypid": 1 },
+  {
+    "obj": 10554,
+    "objektname": "St. Ulrich Stadtresidenz, St.-Ulrich-Str. 9",
+    "objekttypid": 2
+  },
+  { "obj": 10555, "objektname": "Krankenhausstr. 1a", "objekttypid": 1 },
+  {
+    "obj": 10556,
+    "objektname": "Inntalstr. 29 - Chalet Sarah",
+    "objekttypid": 2
+  },
+  { "obj": 10557, "objektname": "Dahlienweg 3", "objekttypid": 1 },
+  { "obj": 10562, "objektname": "Am Fischl 10", "objekttypid": 2 },
+  {
+    "obj": 10563,
+    "objektname": "Thermalbadstraße 6 Arkadenhaus Thermenblick",
+    "objekttypid": 2
+  },
+  { "obj": 10575, "objektname": "Innere Neumarkter Str. 2", "objekttypid": 1 },
+  {
+    "obj": 10580,
+    "objektname": "Holzbacher Straße 14 b + 14 c",
+    "objekttypid": 2
+  },
+  { "obj": 10581, "objektname": "Fehrbelliner Str. 33", "objekttypid": 2 },
+  { "obj": 10583, "objektname": "Untermarkt 24", "objekttypid": 1 },
+  { "obj": 10584, "objektname": "Kirchenweg 10 - 10 b", "objekttypid": 2 },
+  { "obj": 10586, "objektname": "Prälat-Mühldorfer-Str. 35", "objekttypid": 2 },
+  { "obj": 10588, "objektname": "Egglkofenstr. 11", "objekttypid": 1 },
+  { "obj": 10589, "objektname": "Nordtangente 10", "objekttypid": 1 },
+  {
+    "obj": 10591,
+    "objektname": "Frauenwaldstr. 7, Golf- und Sporthotel Reutmühle",
+    "objekttypid": 5
+  },
+  { "obj": 10592, "objektname": "Mühlenstraße 10", "objekttypid": 1 },
+  { "obj": 10595, "objektname": "Dr.-Wimmer-Ring 1", "objekttypid": 1 },
+  { "obj": 10596, "objektname": "Wies 16", "objekttypid": 4 },
+  { "obj": 10597, "objektname": "Wolfingerstr. 2", "objekttypid": 1 },
+  { "obj": 10599, "objektname": "Hochhäuslweg 2", "objekttypid": 1 },
+  {
+    "obj": 10601,
+    "objektname": "Schießstattweg 3, 3a, Haus Romano",
+    "objekttypid": 2
+  },
+  { "obj": 10603, "objektname": "Neuer Marktplatz 10", "objekttypid": 1 },
+  { "obj": 10604, "objektname": "Pfarrkirchner Str. 8", "objekttypid": 1 },
+  { "obj": 10607, "objektname": "Bahnhofstr. 30, Haus Rott", "objekttypid": 2 },
+  { "obj": 10608, "objektname": "Lerchenweg 5+5a", "objekttypid": 1 },
+  {
+    "obj": 10609,
+    "objektname": "Hofmarkplatz 1 - Neue Mitte Thyrnau",
+    "objekttypid": 1
+  },
+  { "obj": 10610, "objektname": "Ludwig-Thoma-Weg 9 a", "objekttypid": 2 },
+  {
+    "obj": 10612,
+    "objektname": "Schießstattweg 3/3a Stellplätze",
+    "objekttypid": 2
+  },
+  { "obj": 10613, "objektname": "Kapellenstr. 8", "objekttypid": 2 },
+  { "obj": 10614, "objektname": "Gabelsbergerstr. 58-60 b", "objekttypid": 2 },
+  { "obj": 10615, "objektname": "Griesbacher Str. 14", "objekttypid": 2 },
+  { "obj": 10616, "objektname": "Hauptstr. 36", "objekttypid": 1 },
+  { "obj": 10617, "objektname": "Lenaustr. 20-26", "objekttypid": 2 },
+  { "obj": 10621, "objektname": "Alpe 8", "objekttypid": 2 },
+  { "obj": 10624, "objektname": "Pfarrkirchnerstr. 12", "objekttypid": 1 },
+  { "obj": 10625, "objektname": "Stögmeierweg 1", "objekttypid": 1 },
+  { "obj": 10626, "objektname": "Ohlauer Str. 56", "objekttypid": 2 },
+  { "obj": 10627, "objektname": "Birkenleiten 11", "objekttypid": 2 },
+  { "obj": 10628, "objektname": "Wiesenweg 7", "objekttypid": 1 },
+  {
+    "obj": 10629,
+    "objektname": "Hofgartenstraße 6a, Haus am Bach",
+    "objekttypid": 2
+  },
+  { "obj": 10630, "objektname": "Am Predigtstuhl 2", "objekttypid": 5 },
+  { "obj": 10634, "objektname": "Hofmark 12", "objekttypid": 1 },
+  {
+    "obj": 10635,
+    "objektname": "Bürgermeister-Stoffel-Straße 11 - Haus Claudius",
+    "objekttypid": 2
+  },
+  { "obj": 10636, "objektname": "Hartkirchner Str. 22", "objekttypid": 1 },
+  { "obj": 10637, "objektname": "An der Bräukapelle 32", "objekttypid": 1 },
+  { "obj": 10638, "objektname": "Am Berg 2 und 3", "objekttypid": 1 },
+  { "obj": 10639, "objektname": "Mahlgassinger Weg 32", "objekttypid": 2 },
+  { "obj": 10640, "objektname": "St.-Georg-Str.7", "objekttypid": 2 },
+  { "obj": 10641, "objektname": "Richtsfeldstraße 7", "objekttypid": 1 },
+  { "obj": 10642, "objektname": "An der Schule 10", "objekttypid": 1 },
+  { "obj": 10643, "objektname": "Kotzinger Str. 6", "objekttypid": 1 },
+  { "obj": 10644, "objektname": "Prof.-Drexel-Str. 1", "objekttypid": 1 },
+  {
+    "obj": 10645,
+    "objektname": "Kapuzinerstr. 35/35a, Innstadtresidenz",
+    "objekttypid": 2
+  },
+  { "obj": 10646, "objektname": "Sonneneck 6", "objekttypid": 2 },
+  { "obj": 10647, "objektname": "Michael-Maier-Str. 9", "objekttypid": 1 },
+  { "obj": 10649, "objektname": "Lerchenweg 13", "objekttypid": 2 },
+  { "obj": 10650, "objektname": "Blumenstraße 14", "objekttypid": 1 },
+  {
+    "obj": 10652,
+    "objektname": "Am Höhenring 2, 4, 6, Aunhamer Weg 21",
+    "objekttypid": 2
+  },
+  { "obj": 10653, "objektname": "Ferienpark Jägerwiesen", "objekttypid": 2 },
+  { "obj": 10655, "objektname": "Krankenhaus Wohnheim", "objekttypid": 1 },
+  { "obj": 10656, "objektname": "Falkensteinstraße 22/24", "objekttypid": 2 },
+  { "obj": 10657, "objektname": "Neuer Marktplatz 7", "objekttypid": 1 },
+  {
+    "obj": 10658,
+    "objektname": "Straßbergerstraße 2-22 (im Olympiadorf)",
+    "objekttypid": 2
+  },
+  { "obj": 10659, "objektname": "Blumenhof 1-4", "objekttypid": 5 },
+  { "obj": 10660, "objektname": "Blumenhof 5", "objekttypid": 5 },
+  {
+    "obj": 10661,
+    "objektname": "Parkhaus Nord - Kurallee 8a - Parkstadl",
+    "objekttypid": 5
+  },
+  {
+    "obj": 10662,
+    "objektname": "IG Antennenanlage Kurgebiet",
+    "objekttypid": 5
+  },
+  { "obj": 10663, "objektname": "Kurallee 1a 'Kreisl'", "objekttypid": 5 },
+  { "obj": 10664, "objektname": "Tiefgarage Süd", "objekttypid": 5 },
+  { "obj": 10665, "objektname": "Schlossberg 23", "objekttypid": 2 },
+  { "obj": 10667, "objektname": "Birkenweg 3", "objekttypid": 2 },
+  { "obj": 10668, "objektname": "Hauzenbergerstraße 12", "objekttypid": 2 },
+  {
+    "obj": 10670,
+    "objektname": "(3301) Hornstraße / Lerchenauerstraße",
+    "objekttypid": 2
+  },
+  { "obj": 10672, "objektname": "Korbinian-Beer-Str. 3-11", "objekttypid": 2 },
+  { "obj": 10673, "objektname": "Torstraße 139", "objekttypid": 2 },
+  { "obj": 10674, "objektname": "Knesebeckstraße 22", "objekttypid": 2 },
+  { "obj": 10688, "objektname": "Stadtplatz 30", "objekttypid": 4 },
+  { "obj": 10689, "objektname": "Am Seidenhof 13+15", "objekttypid": 2 },
+  { "obj": 10691, "objektname": "Sieglmühlweg 10", "objekttypid": 2 },
+  { "obj": 10693, "objektname": "Söldenpeterweg 31", "objekttypid": 1 },
+  { "obj": 10698, "objektname": "Eckwiesstr. 6", "objekttypid": 2 },
+  {
+    "obj": 10699,
+    "objektname": "Schleißheimer Str. 341/343 + Hamburger Str. 30/32",
+    "objekttypid": 2
+  },
+  { "obj": 10700, "objektname": "Vermietung Pfarrhof", "objekttypid": 1 },
+  { "obj": 10701, "objektname": "Dr. Josef-Weigl-Str. 17", "objekttypid": 1 },
+  { "obj": 10702, "objektname": "Otto-Suhr-Allee 18/20", "objekttypid": 2 },
+  {
+    "obj": 10703,
+    "objektname": "Prof.-Drexel-Str. 23 + Kirchham",
+    "objekttypid": 1
+  },
+  { "obj": 10704, "objektname": "Lederinstr. 6", "objekttypid": 2 },
+  { "obj": 10705, "objektname": "Lederinstr. 7", "objekttypid": 2 },
+  {
+    "obj": 10706,
+    "objektname": "Griegstraße 9, 9a, 9b/00018",
+    "objekttypid": 1
+  },
+  { "obj": 10707, "objektname": "Bajuwarenstraße 57", "objekttypid": 1 },
+  {
+    "obj": 10708,
+    "objektname": "Heckl allgemein ohne Zuordnung",
+    "objekttypid": 3
+  },
+
+  { "obj": 10709, "objektname": "Jägerweg 23", "objekttypid": 2 },
+  {
+    "obj": 10710,
+    "objektname": "Dorfstr. 34 - Haus Bergland",
+    "objekttypid": 2
+  },
+  {
+    "obj": 10713,
+    "objektname": "Sporthotel Mitterdorf - Schmelzler Str. 47",
+    "objekttypid": 2
+  },
+  { "obj": 10714, "objektname": "Josef-Stapfer-Str. 8", "objekttypid": 2 },
+  { "obj": 10715, "objektname": "Beethovenring 56", "objekttypid": 2 },
+  { "obj": 10716, "objektname": "Oberweinzierlerstr. 10", "objekttypid": 2 },
+  { "obj": 10717, "objektname": "Au 5-7", "objekttypid": 1 },
+  { "obj": 10719, "objektname": "Ahornring 2", "objekttypid": 2 },
+  { "obj": 10720, "objektname": "Marie-Juchacz-Str. 28", "objekttypid": 2 },
+  {
+    "obj": 10721,
+    "objektname": "Kleinloipertsham 2, Fürstenzell",
+    "objekttypid": 1
+  },
+  {
+    "obj": 10722,
+    "objektname": "Thermalbadstr. 19 - Villa Fortuna",
+    "objekttypid": 2
+  },
+  { "obj": 10728, "objektname": "Neuburger Str. 85b", "objekttypid": 2 },
+  { "obj": 10729, "objektname": "Lerchenauer Str. 3", "objekttypid": 2 },
+  { "obj": 10732, "objektname": "Beethovenring 66", "objekttypid": 2 },
+  { "obj": 10733, "objektname": "Leonhard-Paminger-Str. 18", "objekttypid": 2 },
+  { "obj": 10735, "objektname": "Swinemünder Str. 9", "objekttypid": 2 },
+  { "obj": 10736, "objektname": "Vornholzstr. 149", "objekttypid": 2 },
+  { "obj": 10737, "objektname": "Josef-Hiendl-Weg 2", "objekttypid": 2 },
+  { "obj": 10738, "objektname": "Röstelstraße 3", "objekttypid": 2 },
+  { "obj": 10739, "objektname": "Sparkassenstr. 4 + 4 a", "objekttypid": 2 },
+  { "obj": 10741, "objektname": "Grotthamer Str. 34", "objekttypid": 1 },
+  { "obj": 10742, "objektname": "Untermarkt 26 + 28", "objekttypid": 2 },
+  {
+    "obj": 10743,
+    "objektname": "Schmelzlerstr. 27 - Hotel Almberg",
+    "objekttypid": 2
+  },
+  {
+    "obj": 10745,
+    "objektname": "Passauer Str. 39a - Hotel Columbia",
+    "objekttypid": 2
+  },
+  { "obj": 10746, "objektname": "Silcherstr. 8", "objekttypid": 2 },
+  { "obj": 10747, "objektname": "Herrnwald 23", "objekttypid": 2 },
+  { "obj": 10748, "objektname": "Hauptstr. 7", "objekttypid": 1 },
+  { "obj": 10749, "objektname": "Nadistr. 26-32", "objekttypid": 2 },
+  { "obj": 10750, "objektname": "Herrnwald 25", "objekttypid": 2 },
+  { "obj": 10751, "objektname": "Herterichstr. 89", "objekttypid": 2 },
+  { "obj": 10752, "objektname": "Invalidenstr. 16", "objekttypid": 2 },
+  { "obj": 10753, "objektname": "Rottpark 22-24 - Mooshof", "objekttypid": 2 },
+  { "obj": 10754, "objektname": "Lerchenauer Str. 43 - 47", "objekttypid": 2 },
+  { "obj": 10755, "objektname": "Steinwiesstr. 27", "objekttypid": 2 },
+  { "obj": 10756, "objektname": "Birketweg 35", "objekttypid": 2 },
+  {
+    "obj": 10757,
+    "objektname": "Thermalbadstraße 16 - Rottalblick",
+    "objekttypid": 2
+  },
+  { "obj": 10758, "objektname": "Passauer Str. 19", "objekttypid": 2 },
+  { "obj": 10759, "objektname": "Am Weidlandl 1", "objekttypid": 2 },
+  { "obj": 10760, "objektname": "Franz-Reber-Weg 2, 2a + 4", "objekttypid": 2 },
+  { "obj": 10761, "objektname": "Norbert-Steger-Str. 7", "objekttypid": 1 },
+  {
+    "obj": 10762,
+    "objektname": "Guardinistr. 29 u. Kornwegerstr. 25b",
+    "objekttypid": 2
+  },
+  { "obj": 10763, "objektname": "Am Wirtsfeld 2 - 4", "objekttypid": 1 },
+  { "obj": 10764, "objektname": "Gartenstr. 23/24", "objekttypid": 2 },
+  {
+    "obj": 10765,
+    "objektname": "Göttweiger Str. 76/Kremser Str. 26",
+    "objekttypid": 2
+  },
+  {
+    "obj": 10766,
+    "objektname": "Untere Inntalstr. 63 d 'Haus Rita'",
+    "objekttypid": 2
+  },
+  { "obj": 10767, "objektname": "Bänschstr. 45", "objekttypid": 2 },
+  {
+    "obj": 10768,
+    "objektname": "Schulstr. 1-3/Pfarrkirchner Str. 32",
+    "objekttypid": 1
+  },
+  { "obj": 10769, "objektname": "Stadtplatz 6/Pflegstr. 3", "objekttypid": 1 },
+  {
+    "obj": 10770,
+    "objektname": "Franz-Stelzenberger-Str. 9/Ringstr. 22",
+    "objekttypid": 1
+  },
+  {
+    "obj": 10771,
+    "objektname": "Rottpark 22-24, Vermietung Hannes Rambold",
+    "objekttypid": 3
+  },
+  { "obj": 10772, "objektname": "Milchstr. 12", "objekttypid": 2 },
+  { "obj": 10773, "objektname": "Potsdamer Allee 113 - 115", "objekttypid": 1 },
+  { "obj": 10774, "objektname": "Waldhornstraße 21", "objekttypid": 2 },
+  { "obj": 10775, "objektname": "Drachenfelsstr. 12 - 18", "objekttypid": 2 },
+  {
+    "obj": 10776,
+    "objektname": "Finkenweg 5, Bad Griesbach",
+    "objekttypid": 1
+  },
+  { "obj": 10777, "objektname": "Moserfeld 14", "objekttypid": 1 },
+  { "obj": 10778, "objektname": "Neuwiesenweg 22/24", "objekttypid": 2 },
+  { "obj": 10779, "objektname": "Gerhardstr. 3/ 00011", "objekttypid": 1 },
+  { "obj": 10780, "objektname": "Waldstr. 46/ 00012", "objekttypid": 1 },
+  { "obj": 10781, "objektname": "Waldstr. 57/00013", "objekttypid": 1 },
+  { "obj": 10782, "objektname": "Paulstr. 14/ 00014", "objekttypid": 1 },
+  { "obj": 10783, "objektname": "Plauenscher Ring 8/00015", "objekttypid": 1 },
+  {
+    "obj": 10784,
+    "objektname": "Karl-Böhaimb-Str. 10/00016",
+    "objekttypid": 3
+  },
+  { "obj": 10785, "objektname": "Waisenhausstr. 8/ 00017", "objekttypid": 3 },
+  {
+    "obj": 10786,
+    "objektname": "Schäftlarnstr. 84-90//00019",
+    "objekttypid": 3
+  },
+  { "obj": 10787, "objektname": "Clemensstr. 88/00020", "objekttypid": 3 },
+  {
+    "obj": 10788,
+    "objektname": "Schäftlarnstr. 80-82/00021",
+    "objekttypid": 3
+  },
+  { "obj": 10789, "objektname": "Marbachstr. 8", "objekttypid": 3 },
+  {
+    "obj": 10790,
+    "objektname": "Josef-Führer-Str.7+9,Hitlstr. 17+19",
+    "objekttypid": 2
+  },
+  { "obj": 10791, "objektname": "Graf-Salm-Str. 35", "objekttypid": 2 },
+  { "obj": 10793, "objektname": "Hauschildstr.  8", "objekttypid": 2 },
+  { "obj": 10794, "objektname": "Klaftergasse 2", "objekttypid": 2 },
+  { "obj": 10795, "objektname": "Anzengruberstr. 4", "objekttypid": 2 },
+  { "obj": 10796, "objektname": "Haus Bayerwald", "objekttypid": 2 },
+  {
+    "obj": 10797,
+    "objektname": "Garagenanteile Haus Bayerwald",
+    "objekttypid": 2
+  },
+  { "obj": 10799, "objektname": "Hardenbergstr. 28", "objekttypid": 2 },
+  { "obj": 10802, "objektname": "Weinleitenweg 15", "objekttypid": 2 },
+  { "obj": 10803, "objektname": "Leoprechtingstr. 23", "objekttypid": 2 },
+  { "obj": 10804, "objektname": "Kapuzinerstr. 19", "objekttypid": 2 },
+  {
+    "obj": 10805,
+    "objektname": "Klobensteiner Str. 12, 12 a-d",
+    "objekttypid": 2
+  },
+  { "obj": 10806, "objektname": "Zoppoter Str. 22", "objekttypid": 2 },
+  { "obj": 10807, "objektname": "Nadistr. 129 - 137", "objekttypid": 2 },
+  { "obj": 10808, "objektname": "Götzstr. 12", "objekttypid": 2 },
+  { "obj": 10809, "objektname": "Berggasse 3", "objekttypid": 2 },
+  { "obj": 10810, "objektname": "Glockenstr. 6", "objekttypid": 2 },
+  { "obj": 10811, "objektname": "Comeniusstr. 3", "objekttypid": 1 },
+  { "obj": 10812, "objektname": "Moserfeld 13", "objekttypid": 4 },
+  {
+    "obj": 10865,
+    "objektname": "TG - Göttweigerstr. 76/Kremserstr. 26",
+    "objekttypid": 2
+  },
+  { "obj": 11007, "objektname": "Bahnhofstraße 12", "objekttypid": 1 },
+  {
+    "obj": 11186,
+    "objektname": "Klosterstr. 5/7 Tiefgarage",
+    "objekttypid": 1
+  },
+  { "obj": 11534, "objektname": "Griesbacher Hof Garagen", "objekttypid": 2 },
+  { "obj": 20001, "objektname": "Baumlandweg 3", "objekttypid": 2 },
+  { "obj": 20002, "objektname": "Hofmark 13", "objekttypid": 2 },
+  { "obj": 20005, "objektname": "Lamplweg 2", "objekttypid": 2 },
+  { "obj": 20007, "objektname": "Pfarrkirchener Straße 17", "objekttypid": 2 },
+  {
+    "obj": 20009,
+    "objektname": "Antoniusweg 2 - Haus Felicia",
+    "objekttypid": 2
+  },
+  {
+    "obj": 20010,
+    "objektname": "Antoniusweg 4 - Haus Korbinian",
+    "objekttypid": 2
+  },
+  { "obj": 20011, "objektname": "Antoniusweg 6", "objekttypid": 2 },
+  {
+    "obj": 20012,
+    "objektname": "Andreasstr. 2 App.Haus Margarita",
+    "objekttypid": 2
+  },
+  {
+    "obj": 20013,
+    "objektname": "Birkenhof - Birkenallee 12+12a",
+    "objekttypid": 2
+  },
+  { "obj": 20014, "objektname": "Am Gänseacker 9", "objekttypid": 2 },
+  { "obj": 20015, "objektname": "Gögginger Str. 11", "objekttypid": 2 },
+  { "obj": 20016, "objektname": "Am Gänseacker 13", "objekttypid": 2 },
+  { "obj": 20017, "objektname": "Gögginger Straße 9", "objekttypid": 2 },
+  { "obj": 20019, "objektname": "Hartkirchener Str. 8", "objekttypid": 2 },
+  {
+    "obj": 20021,
+    "objektname": "Heiliggeiststraße 2, Haus Innsbruck",
+    "objekttypid": 2
+  },
+  {
+    "obj": 20022,
+    "objektname": "Ludwig-Thoma-Weg 11 - Haus Filser",
+    "objekttypid": 2
+  },
+  { "obj": 20023, "objektname": "Metzgerstraße 1", "objekttypid": 2 },
+  { "obj": 20025, "objektname": "Meierweg 4+6", "objekttypid": 2 },
+  { "obj": 20027, "objektname": "Pichlstraße 9", "objekttypid": 2 },
+  { "obj": 20028, "objektname": "Reihenweg 12", "objekttypid": 2 },
+  { "obj": 20029, "objektname": "Reihenweg 15", "objekttypid": 2 },
+  { "obj": 20030, "objektname": "Steinreuther Straße 9a", "objekttypid": 2 },
+  { "obj": 20031, "objektname": "Steinreuther Straße 21", "objekttypid": 2 },
+  { "obj": 20032, "objektname": "Tränkeweg 11/ 11a", "objekttypid": 2 },
+  { "obj": 20033, "objektname": "Haus Tessin, Auenstr. 1", "objekttypid": 2 },
+  {
+    "obj": 20034,
+    "objektname": "Untere Inntalstraße 62 - Haus Elfriede",
+    "objekttypid": 2
+  },
+  { "obj": 20036, "objektname": "Untere Inntalstr. 6", "objekttypid": 2 },
+  { "obj": 20037, "objektname": "Voglöd 10 c", "objekttypid": 2 },
+  { "obj": 20039, "objektname": "Wilhelm-Dieß-Weg 7", "objekttypid": 2 },
+  {
+    "obj": 20040,
+    "objektname": "Goethestraße 3 - Zentralhotel",
+    "objekttypid": 2
+  },
+  { "obj": 20041, "objektname": "Elisabethstraße 24/24a", "objekttypid": 2 },
+  { "obj": 20042, "objektname": "Kronberger Str. 7", "objekttypid": 2 },
+  {
+    "obj": 20043,
+    "objektname": "Prälat-Mühldorfer-Str.15 - 27",
+    "objekttypid": 2
+  },
+  {
+    "obj": 20044,
+    "objektname": "Prof. Baumgartner-str. 18/ 18 a",
+    "objekttypid": 2
+  },
+  { "obj": 20045, "objektname": "Asperweg 17", "objekttypid": 2 },
+  { "obj": 20046, "objektname": "An der Schule 8", "objekttypid": 2 },
+  { "obj": 20047, "objektname": "Sperberweg 8/ 10", "objekttypid": 2 },
+  { "obj": 20048, "objektname": "Holzbacher Straße 21/21a", "objekttypid": 2 },
+  { "obj": 20049, "objektname": "Sonnenweg 4", "objekttypid": 2 },
+  { "obj": 20053, "objektname": "Siedlungstr. 14a", "objekttypid": 2 },
+  { "obj": 20054, "objektname": "Kamm 1/2/3/3a", "objekttypid": 2 },
+  { "obj": 20055, "objektname": "Gionstraße 12 e", "objekttypid": 2 },
+  { "obj": 20056, "objektname": "Gionstr. 12f", "objekttypid": 2 },
+  { "obj": 20058, "objektname": "Söldenpeterweg 35a", "objekttypid": 2 },
+  { "obj": 20059, "objektname": "Söldenpeterweg 35b", "objekttypid": 2 },
+  { "obj": 20060, "objektname": "Söldenpeterweg 35c", "objekttypid": 2 },
+  { "obj": 20061, "objektname": "Söldenpeterweg 35d", "objekttypid": 2 },
+  { "obj": 20062, "objektname": "Schießstattweg 113", "objekttypid": 2 },
+  { "obj": 20063, "objektname": "Bozener Straße 14", "objekttypid": 2 },
+  { "obj": 20064, "objektname": "Eichendorffstraße 3a", "objekttypid": 2 },
+  { "obj": 20065, "objektname": "Falkensteinstraße 18/20", "objekttypid": 2 },
+  { "obj": 20066, "objektname": "Josef-Oswald-Straße 2-8", "objekttypid": 2 },
+  { "obj": 20068, "objektname": "Ganghoferstraße 9", "objekttypid": 2 },
+  {
+    "obj": 20070,
+    "objektname": "Hochstraße 19 - 19a-19b-19c-19d",
+    "objekttypid": 2
+  },
+  { "obj": 20071, "objektname": "Langemarckstr. 15", "objekttypid": 2 },
+  { "obj": 20072, "objektname": "Neuburger Straße 48", "objekttypid": 2 },
+  { "obj": 20073, "objektname": "Neuburger Str. 88", "objekttypid": 2 },
+  { "obj": 20074, "objektname": "Passauer Str. 84/86", "objekttypid": 2 },
+  { "obj": 20075, "objektname": "Neustifterstr. 36", "objekttypid": 2 },
+  { "obj": 20076, "objektname": "Neustifter Str. 35/37 a-d", "objekttypid": 2 },
+  { "obj": 20078, "objektname": "Söldenpeterweg 37", "objekttypid": 2 },
+  {
+    "obj": 20079,
+    "objektname": "Bergerstraße 28 / 28 a/ 28 b",
+    "objekttypid": 2
+  },
+  { "obj": 20080, "objektname": "Bajuwarenstraße 13", "objekttypid": 2 },
+  { "obj": 20081, "objektname": "Am Wimhof 35/39", "objekttypid": 2 },
+  { "obj": 20082, "objektname": "Am Wimhof 41/43", "objekttypid": 2 },
+  { "obj": 20083, "objektname": "Gartenstraße 32 a", "objekttypid": 2 },
+  { "obj": 20084, "objektname": "Gartenstraße 32 b", "objekttypid": 2 },
+  { "obj": 20085, "objektname": "Bräugasse 7/9/11", "objekttypid": 2 },
+  { "obj": 20087, "objektname": "Roßtränke 12", "objekttypid": 2 },
+  { "obj": 20088, "objektname": "Roßtränke 13", "objekttypid": 2 },
+  { "obj": 20089, "objektname": "Rittsteigerstraße 35", "objekttypid": 2 },
+  { "obj": 20090, "objektname": "Rittsteiger Straße 37", "objekttypid": 2 },
+  { "obj": 20091, "objektname": "Ahornring 1", "objekttypid": 2 },
+  { "obj": 20092, "objektname": "Bergstraße 6", "objekttypid": 2 },
+  { "obj": 20093, "objektname": "Dr.-Duisberg-Straße 6", "objekttypid": 2 },
+  {
+    "obj": 20094,
+    "objektname": "Goethestraße 6 - Haus Rossini",
+    "objekttypid": 2
+  },
+  {
+    "obj": 20096,
+    "objektname": "Sonnenstraße 11-13 - Haus Armin",
+    "objekttypid": 2
+  },
+  { "obj": 20097, "objektname": "Am Gänseacker 4", "objekttypid": 2 },
+  { "obj": 20098, "objektname": "Facklmühle 4", "objekttypid": 2 },
+  { "obj": 20099, "objektname": "Neuer Marktplatz 12", "objekttypid": 2 },
+  { "obj": 20105, "objektname": "Südallee 6", "objekttypid": 2 },
+  { "obj": 20107, "objektname": "Söldenpeterweg 35", "objekttypid": 2 },
+  {
+    "obj": 20110,
+    "objektname": "Sonnenstraße 15 - Haus Patavia",
+    "objekttypid": 2
+  },
+  { "obj": 20111, "objektname": "Martinweg 8", "objekttypid": 2 },
+  { "obj": 20112, "objektname": "Grabengasse 12", "objekttypid": 2 },
+  { "obj": 20113, "objektname": "Ostuzzistraße 1", "objekttypid": 2 },
+  {
+    "obj": 20114,
+    "objektname": "Birkenallee 11 - Haus Passau",
+    "objekttypid": 2
+  },
+  { "obj": 20115, "objektname": "Sonnenstraße 34", "objekttypid": 2 },
+  { "obj": 20116, "objektname": "Söldenpeterweg 20 a+b", "objekttypid": 2 },
+  { "obj": 20117, "objektname": "Aunhamer Weg 13", "objekttypid": 2 },
+  { "obj": 20120, "objektname": "Tulpenstr. 7", "objekttypid": 2 },
+  { "obj": 20121, "objektname": "Ostuzzistr. 2", "objekttypid": 2 },
+  { "obj": 20122, "objektname": "Tannenleite 23", "objekttypid": 2 },
+  { "obj": 20124, "objektname": "Lusenweg 17", "objekttypid": 2 },
+  { "obj": 20125, "objektname": "Bayerwaldblick 3", "objekttypid": 2 },
+  { "obj": 20127, "objektname": "Bayerwaldblick 1", "objekttypid": 2 },
+  {
+    "obj": 20128,
+    "objektname": "Safferstettener Straße 33-33b",
+    "objekttypid": 2
+  },
+  { "obj": 20129, "objektname": "Erlenweg 2", "objekttypid": 2 },
+  { "obj": 20130, "objektname": "Gütlbauerweg 8", "objekttypid": 2 },
+  {
+    "obj": 20131,
+    "objektname": "Schustergasse 11 / Milchgasse 10 a",
+    "objekttypid": 2
+  },
+  { "obj": 20132, "objektname": "Ganghoferstr. 11", "objekttypid": 2 },
+  { "obj": 20133, "objektname": "Nibelungenstraße 10", "objekttypid": 2 },
+  { "obj": 20134, "objektname": "Hubertusweg 6", "objekttypid": 2 },
+  {
+    "obj": 20135,
+    "objektname": "Bahnhofstraße 3 - Cityresidenz",
+    "objekttypid": 2
+  },
+  { "obj": 20136, "objektname": "Alte Straße 99a-99b", "objekttypid": 2 },
+  { "obj": 20137, "objektname": "Bachstr. 33, Erlenhof", "objekttypid": 2 },
+  {
+    "obj": 20138,
+    "objektname": "Untere Inntalstraße 17,19.19a - Fichtlhof",
+    "objekttypid": 2
+  },
+  {
+    "obj": 20139,
+    "objektname": "Neustifterstr. 17 a + 17 b",
+    "objekttypid": 2
+  },
+  { "obj": 20140, "objektname": "Minihofstr. 1a", "objekttypid": 2 },
+  {
+    "obj": 20141,
+    "objektname": "Dr.-Stephan-Billinger-Str. 4",
+    "objekttypid": 2
+  },
+  { "obj": 20142, "objektname": "Kamm 7, 7a", "objekttypid": 2 },
+  { "obj": 21088, "objektname": "Roßtränke 13 TG", "objekttypid": 2 }
+]
