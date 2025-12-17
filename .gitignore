@@ -12,3 +12,4 @@
 /tests
 /tmp
 /vendor
+.env
