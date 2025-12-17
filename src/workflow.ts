@@ -10,6 +10,7 @@ import {
   findPropertyTool,
   getPropertyByIdTool,
   advancedPropertySearch,
+  searchPropertyFuzzy,
 } from "./db-tools";
 import { z } from "zod";
 
@@ -159,7 +160,7 @@ const intelligentPropertyAgent = new Agent({
 
 IMPORTANT: Voice transcripts may have errors due to:
 - Accents and pronunciation differences
-- Background noise
+- Background noise  
 - Speech-to-text mistakes
 - Mumbling or unclear speech
 
@@ -167,28 +168,35 @@ Your job:
 1. Extract the property name/keyword mentioned (be flexible with spelling)
 2. Extract duration worked (in seconds)
 3. Use search_property_fuzzy tool to find matching properties
-4. Analyze the matches and pick the BEST one based on context
+4. **CRITICAL**: Make EXACTLY ONE call to search_property_fuzzy. Do NOT call it multiple times.
+5. **CRITICAL**: Return ALL matches from that single tool call as alternatives (the tool result is already limited).
 
 EXTRACTION RULES:
 - Property: Look for any building/property identifier
   - "worked at trend" ? search "trend"
-  - "blue tauer apartment" ? search "blue tower" (fix common mistakes)
-  - "the harmony building" ? search "harmony"
+  - "rathald" ? search "rathald" (will find "Ratoldweg" via fuzzy match)
+  - "blue tauer apartment" ? search "blue tower"
   
 - Duration: Convert everything to seconds
-  - Time ranges: Calculate difference
-  - "30 mins" = 1800 seconds
+  - "45 minutes" = 2700 seconds
   - "2:30 to 3:15" = 2700 seconds
   - "from 4.30 to 5.30" = 3600 seconds
 
 MATCHING STRATEGY:
-1. Use search tool to get candidates
-2. If multiple matches, prefer:
-   - Exact or starts_with matches (highest confidence)
-   - Phonetic matches (medium confidence) - good for accents
-   - Contains matches (lower confidence)
-3. Use context from transcript to disambiguate
-4. If unsure between 2+ properties, pick the one mentioned most recently in company records
+1. Call search_property_fuzzy once with:
+   - query: your best extracted keyword
+   - limit: 5
+2. **ALWAYS include all returned matches in the alternatives array**
+3. Pick the TOP match as the primary result
+4. If top match has combined_score < 50, set confidence to "low"
+5. If combined_score >= 75, set confidence to "high"
+6. If combined_score 50-74, set confidence to "medium"
+
+**CRITICAL OUTPUT RULES:**
+- ALWAYS populate the "alternatives" array with ALL matches from the tool
+- Even if you pick one as the best match, include the others
+- Include match scores and match types in alternatives
+- Never return empty alternatives if the tool returned matches
 
 OUTPUT FORMAT (strict JSON):
 {
@@ -197,16 +205,176 @@ OUTPUT FORMAT (strict JSON):
   "objekttypid": <type_id or null>,
   "duration": <seconds>,
   "confidence": "high|medium|low",
-  "reasoning": "<why you picked this property>",
-  "alternatives": [<other possible matches>]
-}`,
+  "reasoning": "<short: why you picked this property; mention match score>",
+  "alternatives": [
+    {
+      "obj": "<id>",
+      "objektname": "<name>",
+      "objekttypid": <type>,
+      "match_score": <number>,
+      "match_type": "<type>",
+      "confidence": "<level>"
+    }
+  ]
+}
+
+EXAMPLE:
+If tool returns 3 matches with scores [65, 45, 30], you should:
+1. Pick the 65-score match as primary (confidence: "medium")
+2. Include ALL 3 matches in alternatives array
+3. Explain in reasoning: "Picked 'Property X' with match score of 65..."`,
   model: "gpt-4o-mini",
   tools: [advancedPropertySearch],
   modelSettings: {
-    temperature: 0.2, // Lower for consistency
-    maxTokens: 1024,
+    temperature: 0.1, // Very low for consistency
+    maxTokens: 700, // Keep output small for latency
   },
 });
+
+function parseDurationSeconds(text: string): number | null {
+  const t = (text || "").toLowerCase();
+  const normalized = t.replace(/[??]/g, "-");
+
+  // "from 4:30 to 5:30" / "4.30 to 5.30"
+  const range = normalized.match(
+    /(?:from\s*)?(\d{1,2})[.:](\d{2})\s*(?:to|-)\s*(\d{1,2})[.:](\d{2})/
+  );
+  if (range) {
+    const sh = Number(range[1]);
+    const sm = Number(range[2]);
+    const eh = Number(range[3]);
+    const em = Number(range[4]);
+    if (
+      Number.isFinite(sh) &&
+      Number.isFinite(sm) &&
+      Number.isFinite(eh) &&
+      Number.isFinite(em)
+    ) {
+      const start = sh * 3600 + sm * 60;
+      const end = eh * 3600 + em * 60;
+      if (end >= start) return end - start;
+    }
+  }
+
+  // "for 5 minutes" / "5 min" / "2 hours"
+  const numUnit = t.match(
+    /(\d+(?:\.\d+)?)\s*(seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h)\b/
+  );
+  if (numUnit) {
+    const value = Number(numUnit[1]);
+    const unit = numUnit[2];
+    if (!Number.isFinite(value)) return null;
+    if (unit.startsWith("h")) return Math.round(value * 3600);
+    if (unit.startsWith("m")) return Math.round(value * 60);
+    return Math.round(value);
+  }
+
+  // Basic word numbers: "five minutes"
+  const wordNum = t.match(
+    /\b(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\s+(seconds?|minutes?|hours?)\b/
+  );
+  if (wordNum) {
+    const map: Record<string, number> = {
+      one: 1,
+      two: 2,
+      three: 3,
+      four: 4,
+      five: 5,
+      six: 6,
+      seven: 7,
+      eight: 8,
+      nine: 9,
+      ten: 10,
+      eleven: 11,
+      twelve: 12,
+    };
+    const value = map[wordNum[1]];
+    const unit = wordNum[2];
+    if (unit.startsWith("hour")) return value * 3600;
+    if (unit.startsWith("minute")) return value * 60;
+    return value;
+  }
+
+  return null;
+}
+
+function extractKeywordHeuristic(text: string): string | null {
+  const raw = (text || "").trim();
+  if (!raw) return null;
+  const t = raw.replace(/\s+/g, " ");
+
+  // Prefer "in X", "at X", "property X"
+  const m =
+    t.match(/\b(?:in|at)\s+([A-Za-zÀ-ÖØ-öø-ÿ0-9.\- ]{3,40})/i) ||
+    t.match(/\bproperty\s+([A-Za-zÀ-ÖØ-öø-ÿ0-9.\- ]{3,40})/i);
+  if (m?.[1]) {
+    return m[1]
+      .replace(/\b(for|from|to)\b.*/i, "")
+      .replace(/[^\p{L}\p{N}.\- ]/gu, "")
+      .trim();
+  }
+
+  // Fallback: longest token-ish word
+  const candidates = t
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}.\- ]/gu, " ")
+    .split(/\s+/)
+    .filter((w) => w.length >= 4 && !/^\d+$/.test(w));
+  if (!candidates.length) return null;
+  candidates.sort((a, b) => b.length - a.length);
+  return candidates[0];
+}
+
+export async function runWorkflowFast(
+  workflow: WorkflowInput
+): Promise<WorkflowResponse> {
+  if (!workflow.input_as_text) {
+    throw new Error("input_as_text is required");
+  }
+
+  const startedAt = Date.now();
+  const transcript = workflow.input_as_text;
+
+  const duration = parseDurationSeconds(transcript) ?? 0;
+  const keyword = extractKeywordHeuristic(transcript);
+
+  if (keyword) {
+    const search = await searchPropertyFuzzy(keyword, 5);
+    const top = search.matches?.[0];
+    const topScore: number = Number(top?.combined_score ?? top?.db_score ?? 0);
+
+    // If we have a strong match, return immediately (no LLM)
+    if (top && topScore >= 65) {
+      const output = {
+        obj: top.obj ?? null,
+        objektname: top.objektname ?? null,
+        objekttypid: top.objekttypid ?? null,
+        duration,
+        confidence: topScore >= 75 ? "high" : "medium",
+        reasoning: `Fast match on '${keyword}' (score ${topScore})`,
+        alternatives: (search.matches || []).map((m: any) => ({
+          obj: m.obj,
+          objektname: m.objektname,
+          objekttypid: m.objekttypid,
+          match_score: m.combined_score ?? m.db_score ?? 0,
+          match_type: m.match_type ?? "unknown",
+          confidence: m.confidence ?? "low",
+        })),
+      };
+
+      console.log(
+        `[${new Date().toISOString()}] Fast workflow completed in ${
+          Date.now() - startedAt
+        }ms`
+      );
+
+      return { output_text: JSON.stringify(output, null, 2) };
+    }
+  }
+
+  // Fallback to accurate agent when heuristic match isn't strong
+  return await runWorkflowAccurate(workflow);
+}
 
 // Main workflow entrypoint
 //uses two agents
@@ -340,7 +508,6 @@ export const runWorkflowOptimized = async (
   });
 };
 
-//usess fuzzy search tool
 export async function runWorkflowAccurate(
   workflow: WorkflowInput
 ): Promise<WorkflowResponse> {
@@ -373,10 +540,24 @@ export async function runWorkflowAccurate(
   }
 
   const duration = Date.now() - startTime;
+
+  // DEBUG: Log the raw agent output
   console.log(
-    `[${new Date().toISOString()}] Completed in ${duration}ms:`,
+    `[${new Date().toISOString()}] Raw agent output:`,
     result.finalOutput
   );
+
+  // DEBUG: Log tool calls
+  if (result.newItems) {
+    result.newItems.forEach((item, index) => {
+      console.log(
+        `[${new Date().toISOString()}] Item ${index}:`,
+        JSON.stringify(item, null, 2)
+      );
+    });
+  }
+
+  console.log(`[${new Date().toISOString()}] Completed in ${duration}ms`);
 
   return {
     output_text: result.finalOutput,

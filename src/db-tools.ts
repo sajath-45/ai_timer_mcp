@@ -2,8 +2,18 @@ import mysql from "mysql2/promise";
 import dotenv from "dotenv";
 import { tool } from "@openai/agents";
 import { z } from "zod";
+import { compareTwoStrings } from "string-similarity";
 
 dotenv.config();
+
+// Cache all properties for string similarity matching
+let cachedProperties: Array<{
+  obj: string;
+  objektname: string;
+  objekttypid: number;
+}> = [];
+let lastCacheTime = 0;
+const CACHE_TTL = 300000; // 5 minutes
 
 // Configure DB connection pool
 const db = mysql.createPool({
@@ -33,43 +43,275 @@ db.getConnection()
     );
   });
 
-// Tool 1: Find properties by name (for OpenAI Agents SDK)
-export const findPropertyTool = tool({
-  name: "find_property",
-  description:
-    "Find properties by name or partial name. Returns OBJ, objektname, and objekttypid for matching properties. Use this to search for properties when you have a property name or partial name.",
-  parameters: z.object({
-    query: z
-      .string()
-      .describe(
-        "Property name or partial name to search for (e.g., 'ABC123' or 'ABC')"
-      ),
-  }),
-  execute: async (input) => {
-    console.log("findPropertyTool input:", input);
-    try {
-      const [rows] = await db.query(
-        `
-        SELECT 
-          obj, 
-          objektname, 
-          objekttypid,
-          CASE WHEN LOWER(objektname) LIKE CONCAT('%', LOWER(?), '%') THEN 1 ELSE 0 END AS partial_match,
-          CASE WHEN SOUNDEX(objektname) = SOUNDEX(?) THEN 1 ELSE 0 END AS phonetic_match,
-          (1 - (LENGTH(REPLACE(LOWER(objektname), LOWER(?), '')) / LENGTH(objektname))) AS similarity_ratio
-        FROM properties
-        ORDER BY partial_match DESC, phonetic_match DESC, similarity_ratio DESC
-        LIMIT 5;
-        `,
-        [input.query, input.query, input.query]
+async function loadAllProperties() {
+  const now = Date.now();
+
+  if (cachedProperties.length > 0 && now - lastCacheTime < CACHE_TTL) {
+    console.log(`[${new Date().toISOString()}] Using cached properties`);
+    return cachedProperties;
+  }
+
+  console.log(
+    `[${new Date().toISOString()}] Loading all properties for fuzzy matching...`
+  );
+
+  const [rows] = await db.query(
+    "SELECT obj, objektname, objekttypid FROM properties ORDER BY objektname"
+  );
+
+  cachedProperties = Array.isArray(rows) ? (rows as any[]) : [];
+  lastCacheTime = now;
+
+  console.log(
+    `[${new Date().toISOString()}] Cached ${cachedProperties.length} properties`
+  );
+
+  return cachedProperties;
+}
+
+export async function warmPropertyCache(): Promise<void> {
+  try {
+    await loadAllProperties();
+  } catch (e: any) {
+    // Non-fatal: cache warmup is best-effort
+    console.warn(
+      `[${new Date().toISOString()}] Property cache warmup failed:`,
+      e?.message ?? e
+    );
+  }
+}
+
+export async function searchPropertyFuzzy(
+  query: string,
+  limit: number = 3
+): Promise<{
+  query: string;
+  matches: any[];
+  total_found: number;
+  search_method: "database_with_similarity" | "full_scan";
+}> {
+  const startedAt = Date.now();
+  const safeLimit = Math.max(1, Math.min(50, Number(limit) || 3));
+  const searchTerm = String(query ?? "")
+    .toLowerCase()
+    .trim();
+
+  if (!searchTerm) {
+    return {
+      query: String(query ?? ""),
+      matches: [],
+      total_found: 0,
+      search_method: "database_with_similarity",
+    };
+  }
+
+  // Step 1: Database candidates (fast when it hits; still useful even without indexes)
+  const [dbRows] = await db.query(
+    `
+    SELECT 
+      obj,
+      objektname,
+      objekttypid,
+      CASE 
+        WHEN LOWER(objektname) = ? THEN 100
+        WHEN LOWER(objektname) LIKE CONCAT(?, '%') THEN 90
+        WHEN LOWER(objektname) LIKE CONCAT('%', ?, '%') THEN 80
+        WHEN SOUNDEX(objektname) = SOUNDEX(?) THEN 70
+        WHEN LOWER(objektname) REGEXP CONCAT('[[:<:]]', ?, '[[:>:]]') THEN 60
+        ELSE 50
+      END AS db_score,
+      CASE 
+        WHEN LOWER(objektname) = ? THEN 'exact'
+        WHEN LOWER(objektname) LIKE CONCAT(?, '%') THEN 'starts_with'
+        WHEN LOWER(objektname) LIKE CONCAT('%', ?, '%') THEN 'contains'
+        WHEN SOUNDEX(objektname) = SOUNDEX(?) THEN 'phonetic'
+        ELSE 'partial'
+      END AS match_type
+    FROM properties
+    WHERE 
+      LOWER(objektname) LIKE CONCAT('%', ?, '%')
+      OR SOUNDEX(objektname) = SOUNDEX(?)
+      OR LOWER(objektname) REGEXP CONCAT('[[:<:]]', ?, '[[:>:]]')
+    ORDER BY db_score DESC
+    LIMIT ?
+    `,
+    [
+      searchTerm,
+      searchTerm,
+      searchTerm,
+      searchTerm,
+      searchTerm, // db_score checks
+      searchTerm,
+      searchTerm,
+      searchTerm,
+      searchTerm, // match_type checks
+      searchTerm,
+      searchTerm,
+      searchTerm, // WHERE clause
+      safeLimit * 1,
+    ]
+  );
+
+  const dbMatches = Array.isArray(dbRows) ? (dbRows as any[]) : [];
+
+  // Step 2: similarity enrichment
+  const enrichedDbMatches = dbMatches.map((match) => {
+    const similarity = compareTwoStrings(
+      searchTerm,
+      match.objektname.toLowerCase()
+    );
+
+    const queryWords = searchTerm.split(/\s+/).filter((w) => w.length >= 2);
+    const nameWords = match.objektname.toLowerCase().split(/\s+/);
+    const wordMatches = queryWords.filter((qw) =>
+      nameWords.some((nw) => nw.includes(qw) || qw.includes(nw))
+    ).length;
+    const wordMatchRatio =
+      queryWords.length > 0 ? wordMatches / queryWords.length : 0;
+
+    const combinedScore =
+      match.db_score * 0.5 +
+      similarity * 100 * 0.3 +
+      wordMatchRatio * 100 * 0.2;
+
+    return {
+      obj: match.obj,
+      objektname: match.objektname,
+      objekttypid: match.objekttypid,
+      db_score: match.db_score,
+      similarity_score: Math.round(similarity * 100),
+      word_match_ratio: Math.round(wordMatchRatio * 100),
+      combined_score: Math.round(combinedScore),
+      match_type: match.match_type,
+      confidence:
+        combinedScore >= 75 ? "high" : combinedScore >= 50 ? "medium" : "low",
+    };
+  });
+
+  enrichedDbMatches.sort((a, b) => b.combined_score - a.combined_score);
+
+  // Step 3: fallback full scan (cached)
+  const bestScore = enrichedDbMatches[0]?.combined_score || 0;
+
+  if (bestScore < 40 || enrichedDbMatches.length === 0) {
+    const allProperties = await loadAllProperties();
+    const allSimilarities = allProperties.map((prop) => {
+      const similarity = compareTwoStrings(
+        searchTerm,
+        prop.objektname.toLowerCase()
       );
-      const resultRows = Array.isArray(rows) ? rows : [];
-      return JSON.stringify({ properties: resultRows }, null, 2);
-    } catch (error: any) {
-      throw new Error(`Database query failed: ${error.message}`);
+
+      const queryWords = searchTerm.split(/\s+/).filter((w) => w.length >= 2);
+      const nameWords = prop.objektname.toLowerCase().split(/\s+/);
+      const wordMatches = queryWords.filter((qw) =>
+        nameWords.some(
+          (nw) =>
+            nw.includes(qw) ||
+            qw.includes(nw) ||
+            compareTwoStrings(qw, nw) > 0.6
+        )
+      ).length;
+      const wordMatchRatio =
+        queryWords.length > 0 ? wordMatches / queryWords.length : 0;
+
+      const combinedScore = similarity * 70 + wordMatchRatio * 30;
+
+      return {
+        obj: prop.obj,
+        objektname: prop.objektname,
+        objekttypid: prop.objekttypid,
+        similarity_score: Math.round(similarity * 100),
+        word_match_ratio: Math.round(wordMatchRatio * 100),
+        combined_score: Math.round(combinedScore),
+        match_type:
+          similarity > 0.8
+            ? "high_similarity"
+            : similarity > 0.6
+            ? "medium_similarity"
+            : wordMatchRatio > 0.6
+            ? "word_match"
+            : "weak_match",
+        confidence:
+          combinedScore >= 60
+            ? "medium"
+            : combinedScore >= 40
+            ? "low"
+            : "very_low",
+      };
+    });
+
+    allSimilarities.sort((a, b) => b.combined_score - a.combined_score);
+    const topMatches = allSimilarities
+      .filter((m) => m.combined_score >= 25)
+      .slice(0, safeLimit);
+
+    const tookMs = Date.now() - startedAt;
+    if (tookMs > 500) {
+      console.log(
+        `[${new Date().toISOString()}] searchPropertyFuzzy(full_scan) took ${tookMs}ms`
+      );
     }
-  },
-});
+
+    return {
+      query,
+      matches: topMatches,
+      total_found: topMatches.length,
+      search_method: "full_scan",
+    };
+  }
+
+  const tookMs = Date.now() - startedAt;
+  if (tookMs > 500) {
+    console.log(
+      `[${new Date().toISOString()}] searchPropertyFuzzy(db) took ${tookMs}ms`
+    );
+  }
+
+  return {
+    query,
+    matches: enrichedDbMatches.slice(0, safeLimit),
+    total_found: Math.min(enrichedDbMatches.length, safeLimit),
+    search_method: "database_with_similarity",
+  };
+}
+
+// // Tool 1: Find properties by name (for OpenAI Agents SDK)
+// export const findPropertyTool = tool({
+//   name: "find_property",
+//   description:
+//     "Find properties by name or partial name. Returns OBJ, objektname, and objekttypid for matching properties. Use this to search for properties when you have a property name or partial name.",
+//   parameters: z.object({
+//     query: z
+//       .string()
+//       .describe(
+//         "Property name or partial name to search for (e.g., 'ABC123' or 'ABC')"
+//       ),
+//   }),
+//   execute: async (input) => {
+//     console.log("findPropertyTool input:", input);
+//     try {
+//       const [rows] = await db.query(
+//         `
+//         SELECT
+//           obj,
+//           objektname,
+//           objekttypid,
+//           CASE WHEN LOWER(objektname) LIKE CONCAT('%', LOWER(?), '%') THEN 1 ELSE 0 END AS partial_match,
+//           CASE WHEN SOUNDEX(objektname) = SOUNDEX(?) THEN 1 ELSE 0 END AS phonetic_match,
+//           (1 - (LENGTH(REPLACE(LOWER(objektname), LOWER(?), '')) / LENGTH(objektname))) AS similarity_ratio
+//         FROM properties
+//         ORDER BY partial_match DESC, phonetic_match DESC, similarity_ratio DESC
+//         LIMIT 5;
+//         `,
+//         [input.query, input.query, input.query]
+//       );
+//       const resultRows = Array.isArray(rows) ? rows : [];
+//       return JSON.stringify({ properties: resultRows }, null, 2);
+//     } catch (error: any) {
+//       throw new Error(`Database query failed: ${error.message}`);
+//     }
+//   },
+// });
 
 // Tool 2: Get property by ID (for OpenAI Agents SDK)
 export const getPropertyByIdTool = tool({
@@ -102,123 +344,64 @@ export const getPropertyByIdTool = tool({
 });
 
 // Tool 3: Advanced property  enhanced fuzzy search tool with multiple matching strategies
+// Enhanced fuzzy search with hybrid approach
 export const advancedPropertySearch = tool({
   name: "search_property_fuzzy",
-  description: `Search properties using multiple matching strategies:
+  description: `Advanced property search using multiple fuzzy matching strategies:
 - Exact match
 - Partial match (contains)
 - Phonetic match (SOUNDEX)
-- Levenshtein distance (edit distance)
-Returns top candidates with confidence scores.`,
+- String similarity (Levenshtein distance)
+- Word-level matching
+Returns top candidates with confidence scores and match details.`,
   parameters: z.object({
     query: z.string().describe("Property name or keyword to search"),
-    limit: z.number().default(10).describe("Max results to return"),
+    limit: z.number().default(3).describe("Max results to return"),
   }),
   execute: async (input) => {
-    console.log(`[${new Date().toISOString()}] Fuzzy search:`, input.query);
-
     try {
-      const searchTerm = input.query.toLowerCase().trim();
+      console.log(
+        `[${new Date().toISOString()}] Advanced fuzzy search:`,
+        input.query
+      );
+      const result = await searchPropertyFuzzy(input.query, input.limit);
+      return JSON.stringify(result, null, 2);
+    } catch (error: any) {
+      console.error(`[${new Date().toISOString()}] Search error:`, error);
+      throw new Error(`Search failed: ${error.message}`);
+    }
+  },
+});
 
-      // Multi-strategy SQL query
+// Export other tools...
+export const findPropertyTool = tool({
+  name: "find_property",
+  description:
+    "Find properties by name or partial name. Returns OBJ, objektname, and objekttypid for matching properties.",
+  parameters: z.object({
+    query: z.string().describe("Property name or partial name to search for"),
+  }),
+  execute: async (input) => {
+    console.log("findPropertyTool input:", input);
+    try {
       const [rows] = await db.query(
         `
         SELECT 
-          obj,
-          objektname,
+          obj, 
+          objektname, 
           objekttypid,
-          -- Scoring system
-          CASE 
-            -- Exact match (highest score)
-            WHEN LOWER(objektname) = ? THEN 100
-            
-            -- Starts with query (very high)
-            WHEN LOWER(objektname) LIKE CONCAT(?, '%') THEN 90
-            
-            -- Contains query (high)
-            WHEN LOWER(objektname) LIKE CONCAT('%', ?, '%') THEN 80
-            
-            -- Phonetic match (medium-high)
-            WHEN SOUNDEX(objektname) = SOUNDEX(?) THEN 70
-            
-            -- Words match (medium)
-            WHEN LOWER(objektname) REGEXP CONCAT('[[:<:]]', ?, '[[:>:]]') THEN 60
-            
-            ELSE 50
-          END AS match_score,
-          
-          -- Edit distance (lower = better)
-          -- Using simple length difference as proxy
-          ABS(LENGTH(objektname) - LENGTH(?)) as length_diff,
-          
-          -- Mark match type for debugging
-          CASE 
-            WHEN LOWER(objektname) = ? THEN 'exact'
-            WHEN LOWER(objektname) LIKE CONCAT(?, '%') THEN 'starts_with'
-            WHEN LOWER(objektname) LIKE CONCAT('%', ?, '%') THEN 'contains'
-            WHEN SOUNDEX(objektname) = SOUNDEX(?) THEN 'phonetic'
-            ELSE 'partial'
-          END AS match_type
-          
+          CASE WHEN LOWER(objektname) LIKE CONCAT('%', LOWER(?), '%') THEN 1 ELSE 0 END AS partial_match,
+          CASE WHEN SOUNDEX(objektname) = SOUNDEX(?) THEN 1 ELSE 0 END AS phonetic_match
         FROM properties
-        WHERE 
-          LOWER(objektname) LIKE CONCAT('%', ?, '%')
-          OR SOUNDEX(objektname) = SOUNDEX(?)
-          OR LOWER(objektname) REGEXP CONCAT('[[:<:]]', ?, '[[:>:]]')
-        
-        ORDER BY 
-          match_score DESC,
-          length_diff ASC,
-          objektname ASC
-        
-        LIMIT ?
+        ORDER BY partial_match DESC, phonetic_match DESC
+        LIMIT 5
         `,
-        [
-          searchTerm, // Exact match check
-          searchTerm, // Starts with
-          searchTerm, // Contains
-          searchTerm, // Phonetic
-          searchTerm, // Word boundary
-          searchTerm, // Length diff
-          searchTerm, // Match type - exact
-          searchTerm, // Match type - starts
-          searchTerm, // Match type - contains
-          searchTerm, // Match type - phonetic
-          searchTerm, // WHERE - contains
-          searchTerm, // WHERE - soundex
-          searchTerm, // WHERE - regexp
-          input.limit,
-        ]
+        [input.query, input.query]
       );
-
-      const results = Array.isArray(rows) ? rows : [];
-
-      console.log(
-        `[${new Date().toISOString()}] Found ${results.length} matches`
-      );
-
-      // Add confidence levels
-      const enrichedResults = results.map((r: any) => ({
-        obj: r.obj,
-        objektname: r.objektname,
-        objekttypid: r.objekttypid,
-        match_score: r.match_score,
-        match_type: r.match_type,
-        confidence:
-          r.match_score >= 90 ? "high" : r.match_score >= 70 ? "medium" : "low",
-      }));
-
-      return JSON.stringify(
-        {
-          query: input.query,
-          matches: enrichedResults,
-          total_found: enrichedResults.length,
-        },
-        null,
-        2
-      );
+      const resultRows = Array.isArray(rows) ? rows : [];
+      return JSON.stringify({ properties: resultRows }, null, 2);
     } catch (error: any) {
-      throw new Error(`Search failed: ${error.message}`);
+      throw new Error(`Database query failed: ${error.message}`);
     }
   },
 });
