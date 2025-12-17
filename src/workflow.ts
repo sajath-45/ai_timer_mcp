@@ -6,7 +6,11 @@ import {
   fileSearchTool,
 } from "@openai/agents";
 import { WorkflowInput, WorkflowResponse } from "./types";
-import { findPropertyTool, getPropertyByIdTool } from "./db-tools";
+import {
+  findPropertyTool,
+  getPropertyByIdTool,
+  advancedPropertySearch,
+} from "./db-tools";
 import { z } from "zod";
 
 // Tool definitions - using MCP database tools instead of file search
@@ -148,102 +152,157 @@ If no property match found, return null for obj/objektname/objekttypid but alway
     store: true,
   },
 });
+// Single agent that does everything with advanced tools
+const intelligentPropertyAgent = new Agent({
+  name: "AccuratePropertyLogger",
+  instructions: `You are an expert at extracting property information from voice transcripts.
+
+IMPORTANT: Voice transcripts may have errors due to:
+- Accents and pronunciation differences
+- Background noise
+- Speech-to-text mistakes
+- Mumbling or unclear speech
+
+Your job:
+1. Extract the property name/keyword mentioned (be flexible with spelling)
+2. Extract duration worked (in seconds)
+3. Use search_property_fuzzy tool to find matching properties
+4. Analyze the matches and pick the BEST one based on context
+
+EXTRACTION RULES:
+- Property: Look for any building/property identifier
+  - "worked at trend" ? search "trend"
+  - "blue tauer apartment" ? search "blue tower" (fix common mistakes)
+  - "the harmony building" ? search "harmony"
+  
+- Duration: Convert everything to seconds
+  - Time ranges: Calculate difference
+  - "30 mins" = 1800 seconds
+  - "2:30 to 3:15" = 2700 seconds
+  - "from 4.30 to 5.30" = 3600 seconds
+
+MATCHING STRATEGY:
+1. Use search tool to get candidates
+2. If multiple matches, prefer:
+   - Exact or starts_with matches (highest confidence)
+   - Phonetic matches (medium confidence) - good for accents
+   - Contains matches (lower confidence)
+3. Use context from transcript to disambiguate
+4. If unsure between 2+ properties, pick the one mentioned most recently in company records
+
+OUTPUT FORMAT (strict JSON):
+{
+  "obj": "<property_id or null>",
+  "objektname": "<property_name or null>",
+  "objekttypid": <type_id or null>,
+  "duration": <seconds>,
+  "confidence": "high|medium|low",
+  "reasoning": "<why you picked this property>",
+  "alternatives": [<other possible matches>]
+}`,
+  model: "gpt-4o-mini",
+  tools: [advancedPropertySearch],
+  modelSettings: {
+    temperature: 0.2, // Lower for consistency
+    maxTokens: 1024,
+  },
+});
 
 // Main workflow entrypoint
 //uses two agents
-export const runWorkflow = async (
-  workflow: WorkflowInput
-): Promise<WorkflowResponse> => {
-  if (!workflow.input_as_text) {
-    throw new Error("input_as_text is required");
-  }
+// export const runWorkflow = async (
+//   workflow: WorkflowInput
+// ): Promise<WorkflowResponse> => {
+//   if (!workflow.input_as_text) {
+//     throw new Error("input_as_text is required");
+//   }
 
-  console.log(
-    `[${new Date().toISOString()}] runWorkflow start with input_as_text:`,
-    workflow.input_as_text
-  );
+//   console.log(
+//     `[${new Date().toISOString()}] runWorkflow start with input_as_text:`,
+//     workflow.input_as_text
+//   );
 
-  return await withTrace("Get Object ID", async () => {
-    const conversationHistory: AgentInputItem[] = [
-      {
-        role: "user",
-        content: [{ type: "input_text", text: workflow.input_as_text }],
-      },
-    ];
+//   return await withTrace("Get Object ID", async () => {
+//     const conversationHistory: AgentInputItem[] = [
+//       {
+//         role: "user",
+//         content: [{ type: "input_text", text: workflow.input_as_text }],
+//       },
+//     ];
 
-    const runner = new Runner({
-      traceMetadata: {
-        __trace_source__: "agent-builder",
-        workflow_id: "wf_6933fd9bb1408190b6b3db91197666080ec54b08ff4c65cb",
-      },
-    });
+//     const runner = new Runner({
+//       traceMetadata: {
+//         __trace_source__: "agent-builder",
+//         workflow_id: "wf_6933fd9bb1408190b6b3db91197666080ec54b08ff4c65cb",
+//       },
+//     });
 
-    // Step 1: Extract property name and duration
-    const extractpropertynameResultTemp = await runner.run(
-      extractpropertyname,
-      [...conversationHistory]
-    );
-    conversationHistory.push(
-      ...extractpropertynameResultTemp.newItems.map((item) => item.rawItem)
-    );
-    if (!extractpropertynameResultTemp.finalOutput) {
-      throw new Error("Agent result is undefined");
-    }
-    const extractpropertynameResult = {
-      output_text: extractpropertynameResultTemp.finalOutput ?? "",
-    };
-    console.log(
-      `[${new Date().toISOString()}] ExtractPropertyName output:`,
-      extractpropertynameResult.output_text
-    );
+//     // Step 1: Extract property name and duration
+//     const extractpropertynameResultTemp = await runner.run(
+//       extractpropertyname,
+//       [...conversationHistory]
+//     );
+//     conversationHistory.push(
+//       ...extractpropertynameResultTemp.newItems.map((item) => item.rawItem)
+//     );
+//     if (!extractpropertynameResultTemp.finalOutput) {
+//       throw new Error("Agent result is undefined");
+//     }
+//     const extractpropertynameResult = {
+//       output_text: extractpropertynameResultTemp.finalOutput ?? "",
+//     };
+//     console.log(
+//       `[${new Date().toISOString()}] ExtractPropertyName output:`,
+//       extractpropertynameResult.output_text
+//     );
 
-    // Push the extracted duration as a hard constraint before running PropertyAgent
-    const parsedExtract = JSON.parse(extractpropertynameResult.output_text);
-    const durationSeconds = parsedExtract.duration;
-    conversationHistory.push({
-      role: "system",
-      content: [
-        {
-          type: "input_text",
-          text: `Use this duration strictly: ${durationSeconds} seconds. Do not re-compute duration; reuse this value.`,
-        },
-      ],
-    });
+//     // Push the extracted duration as a hard constraint before running PropertyAgent
+//     const parsedExtract = JSON.parse(extractpropertynameResult.output_text);
+//     const durationSeconds = parsedExtract.duration;
+//     conversationHistory.push({
+//       role: "system",
+//       content: [
+//         {
+//           type: "input_text",
+//           text: `Use this duration strictly: ${durationSeconds} seconds. Do not re-compute duration; reuse this value.`,
+//         },
+//       ],
+//     });
 
-    // Step 2: Property agent using the generated query to search database
-    const propertyAgentResultTemp = await runner.run(propertyAgent, [
-      ...conversationHistory,
-    ]);
-    conversationHistory.push(
-      ...propertyAgentResultTemp.newItems.map((item) => item.rawItem)
-    );
+//     // Step 2: Property agent using the generated query to search database
+//     const propertyAgentResultTemp = await runner.run(propertyAgent, [
+//       ...conversationHistory,
+//     ]);
+//     conversationHistory.push(
+//       ...propertyAgentResultTemp.newItems.map((item) => item.rawItem)
+//     );
 
-    if (!propertyAgentResultTemp.finalOutput) {
-      throw new Error("Agent result is undefined");
-    }
+//     if (!propertyAgentResultTemp.finalOutput) {
+//       throw new Error("Agent result is undefined");
+//     }
 
-    // Force the final duration to match the extracted duration
-    let finalOutput = propertyAgentResultTemp.finalOutput ?? "";
-    try {
-      const parsedProperty = JSON.parse(finalOutput);
-      parsedProperty.duration = durationSeconds;
-      finalOutput = JSON.stringify(parsedProperty, null, 2);
-    } catch (e) {
-      // If parsing fails, keep original but note the issue
-      console.error("Failed to enforce duration on property result:", e);
-    }
+//     // Force the final duration to match the extracted duration
+//     let finalOutput = propertyAgentResultTemp.finalOutput ?? "";
+//     try {
+//       const parsedProperty = JSON.parse(finalOutput);
+//       parsedProperty.duration = durationSeconds;
+//       finalOutput = JSON.stringify(parsedProperty, null, 2);
+//     } catch (e) {
+//       // If parsing fails, keep original but note the issue
+//       console.error("Failed to enforce duration on property result:", e);
+//     }
 
-    console.log(
-      `[${new Date().toISOString()}] PropertyAgent output (duration enforced):`,
-      finalOutput
-    );
+//     console.log(
+//       `[${new Date().toISOString()}] PropertyAgent output (duration enforced):`,
+//       finalOutput
+//     );
 
-    // Return the property agent output with enforced duration
-    return {
-      output_text: finalOutput,
-    };
-  });
-};
+//     // Return the property agent output with enforced duration
+//     return {
+//       output_text: finalOutput,
+//     };
+//   });
+// };
 
 //uses one agent
 export const runWorkflowOptimized = async (
@@ -280,3 +339,46 @@ export const runWorkflowOptimized = async (
     };
   });
 };
+
+//usess fuzzy search tool
+export async function runWorkflowAccurate(
+  workflow: WorkflowInput
+): Promise<WorkflowResponse> {
+  if (!workflow.input_as_text) {
+    throw new Error("input_as_text is required");
+  }
+
+  console.log(
+    `[${new Date().toISOString()}] Accurate workflow:`,
+    workflow.input_as_text
+  );
+  const startTime = Date.now();
+
+  const runner = new Runner();
+
+  const result = await runner.run(intelligentPropertyAgent, [
+    {
+      role: "user",
+      content: [
+        {
+          type: "input_text",
+          text: workflow.input_as_text,
+        },
+      ],
+    },
+  ]);
+
+  if (!result.finalOutput) {
+    throw new Error("Agent returned no output");
+  }
+
+  const duration = Date.now() - startTime;
+  console.log(
+    `[${new Date().toISOString()}] Completed in ${duration}ms:`,
+    result.finalOutput
+  );
+
+  return {
+    output_text: result.finalOutput,
+  };
+}

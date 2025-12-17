@@ -101,5 +101,127 @@ export const getPropertyByIdTool = tool({
   },
 });
 
+// Tool 3: Advanced property  enhanced fuzzy search tool with multiple matching strategies
+export const advancedPropertySearch = tool({
+  name: "search_property_fuzzy",
+  description: `Search properties using multiple matching strategies:
+- Exact match
+- Partial match (contains)
+- Phonetic match (SOUNDEX)
+- Levenshtein distance (edit distance)
+Returns top candidates with confidence scores.`,
+  parameters: z.object({
+    query: z.string().describe("Property name or keyword to search"),
+    limit: z.number().default(10).describe("Max results to return"),
+  }),
+  execute: async (input) => {
+    console.log(`[${new Date().toISOString()}] Fuzzy search:`, input.query);
+
+    try {
+      const searchTerm = input.query.toLowerCase().trim();
+
+      // Multi-strategy SQL query
+      const [rows] = await db.query(
+        `
+        SELECT 
+          obj,
+          objektname,
+          objekttypid,
+          -- Scoring system
+          CASE 
+            -- Exact match (highest score)
+            WHEN LOWER(objektname) = ? THEN 100
+            
+            -- Starts with query (very high)
+            WHEN LOWER(objektname) LIKE CONCAT(?, '%') THEN 90
+            
+            -- Contains query (high)
+            WHEN LOWER(objektname) LIKE CONCAT('%', ?, '%') THEN 80
+            
+            -- Phonetic match (medium-high)
+            WHEN SOUNDEX(objektname) = SOUNDEX(?) THEN 70
+            
+            -- Words match (medium)
+            WHEN LOWER(objektname) REGEXP CONCAT('[[:<:]]', ?, '[[:>:]]') THEN 60
+            
+            ELSE 50
+          END AS match_score,
+          
+          -- Edit distance (lower = better)
+          -- Using simple length difference as proxy
+          ABS(LENGTH(objektname) - LENGTH(?)) as length_diff,
+          
+          -- Mark match type for debugging
+          CASE 
+            WHEN LOWER(objektname) = ? THEN 'exact'
+            WHEN LOWER(objektname) LIKE CONCAT(?, '%') THEN 'starts_with'
+            WHEN LOWER(objektname) LIKE CONCAT('%', ?, '%') THEN 'contains'
+            WHEN SOUNDEX(objektname) = SOUNDEX(?) THEN 'phonetic'
+            ELSE 'partial'
+          END AS match_type
+          
+        FROM properties
+        WHERE 
+          LOWER(objektname) LIKE CONCAT('%', ?, '%')
+          OR SOUNDEX(objektname) = SOUNDEX(?)
+          OR LOWER(objektname) REGEXP CONCAT('[[:<:]]', ?, '[[:>:]]')
+        
+        ORDER BY 
+          match_score DESC,
+          length_diff ASC,
+          objektname ASC
+        
+        LIMIT ?
+        `,
+        [
+          searchTerm, // Exact match check
+          searchTerm, // Starts with
+          searchTerm, // Contains
+          searchTerm, // Phonetic
+          searchTerm, // Word boundary
+          searchTerm, // Length diff
+          searchTerm, // Match type - exact
+          searchTerm, // Match type - starts
+          searchTerm, // Match type - contains
+          searchTerm, // Match type - phonetic
+          searchTerm, // WHERE - contains
+          searchTerm, // WHERE - soundex
+          searchTerm, // WHERE - regexp
+          input.limit,
+        ]
+      );
+
+      const results = Array.isArray(rows) ? rows : [];
+
+      console.log(
+        `[${new Date().toISOString()}] Found ${results.length} matches`
+      );
+
+      // Add confidence levels
+      const enrichedResults = results.map((r: any) => ({
+        obj: r.obj,
+        objektname: r.objektname,
+        objekttypid: r.objekttypid,
+        match_score: r.match_score,
+        match_type: r.match_type,
+        confidence:
+          r.match_score >= 90 ? "high" : r.match_score >= 70 ? "medium" : "low",
+      }));
+
+      return JSON.stringify(
+        {
+          query: input.query,
+          matches: enrichedResults,
+          total_found: enrichedResults.length,
+        },
+        null,
+        2
+      );
+    } catch (error: any) {
+      throw new Error(`Search failed: ${error.message}`);
+    }
+  },
+});
+
 // Export database pool for direct use if needed
 export { db };

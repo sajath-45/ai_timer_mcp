@@ -1,6 +1,6 @@
 import express, { Request, Response } from "express";
 import dotenv from "dotenv";
-import { runWorkflow, runWorkflowOptimized } from "./workflow"; // <-- IMPORTANT
+import { runWorkflowOptimized, runWorkflowAccurate } from "./workflow"; // <-- IMPORTANT
 import { WorkflowInput } from "./types";
 
 dotenv.config();
@@ -21,7 +21,8 @@ app.post("/process", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "input_as_text field is required" });
     }
 
-    const result = await runWorkflowOptimized(body);
+    // const result = await runWorkflowOptimized(body);
+    const result = await runWorkflowAccurate(body);
 
     console.log(`[${new Date().toISOString()}] /process success:`, result);
 
