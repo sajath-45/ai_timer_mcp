@@ -2,10 +2,14 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.runWorkflowOptimized = void 0;
 exports.runWorkflowFast = runWorkflowFast;
+exports.runWorkflowFastV2 = runWorkflowFastV2;
+exports.runWorkflowHybrid = runWorkflowHybrid;
+exports.runWorkSmart = runWorkSmart;
 exports.runWorkflowAccurate = runWorkflowAccurate;
 const agents_1 = require("@openai/agents");
 const db_tools_1 = require("./db-tools");
 const zod_1 = require("zod");
+const helper_1 = require("./helper");
 // Tool definitions - using MCP database tools instead of file search
 const propertyTools = [db_tools_1.findPropertyTool, db_tools_1.getPropertyByIdTool];
 const fileSearch = (0, agents_1.fileSearchTool)(["vs_693419a3ede081919076f91a5989958d"]);
@@ -118,6 +122,22 @@ EXTRACTION RULES:
   - Direct: "30 minutes" = 1800 seconds
   - Hours: "2 hours" = 7200 seconds
 
+IMPORTANT: most of thr properties have a number after name for example Lusenweg 17 here 17 is the number and lusenweg is the name. so this is the final name do not be confused as 17 is the duration.
+
+GERMAN TIME RANGE SUPPORT (CRITICAL):
+- Handle German phrasing such as "von ... bis ..." and convert to seconds.
+- Examples:
+  - "von acht Uhr morgens bis halb eins" = 08:00 ? 12:30 = 4h30m = 16200 seconds
+  - "von 8 Uhr bis 12:30" = 4h30m = 16200 seconds
+  - "von 8:15 bis 10:00" = 6300 seconds
+  - "von halb neun bis viertel nach zehn" = 08:30 ? 10:15 = 6300 seconds
+  - "von viertel vor neun bis elf Uhr" = 08:45 ? 11:00 = 8100 seconds
+- German clock rules:
+  - "halb X" means 30 minutes BEFORE X (e.g. "halb zwei" = 01:30, "halb eins" = 12:30 in daytime context)
+  - "viertel nach X" = X:15
+  - "viertel vor X" = (X-1):45
+  - "morgens" implies AM; "nachmittags/abends" implies PM
+
 WORKFLOW:
 1. Extract property keyword and duration from transcript
 2. Use find_property tool to search database with the keyword
@@ -216,6 +236,47 @@ If tool returns 3 matches with scores [65, 45, 30], you should:
     modelSettings: {
         temperature: 0.1, // Very low for consistency
         maxTokens: 700, // Keep output small for latency
+    },
+});
+// OPTION 2: LLM-assisted (for complex/ambiguous cases) - ~2-5s
+const smartAgent = new agents_1.Agent({
+    name: "PropertyExtractor",
+    instructions: `Extract property name and duration from transcript.
+
+RULES:
+1. Property name: Look for building/location identifiers
+   - "working on Lucerneweg" ? search "Lucerneweg"
+   - "at Blue Tower" ? search "Blue Tower"
+   - Ignore generic words like "property", "building"
+
+2. Duration: Convert to seconds
+   - "87 minutes and 3 seconds" ? 5223
+   - "from 4:30 to 5:30" ? 3600
+   - "2 hours" ? 7200
+
+3. Call search_property_fuzzy ONCE with extracted keyword
+
+4. Pick best match from results based on:
+   - combined_score (prefer 70+)
+   - If all scores < 50, mark as low confidence
+
+OUTPUT (strict JSON):
+{
+  "obj": "<id or null>",
+  "objektname": "<name or null>",
+  "objekttypid": <number or null>,
+  "duration": <seconds>,
+  "confidence": "high|medium|low",
+  "reasoning": "<1 sentence: why this match, mention score>",
+  "alternatives": [<all other matches from tool>]
+}
+
+CRITICAL: Include ALL matches from search tool in alternatives array.`,
+    model: "gpt-4o-mini",
+    tools: [db_tools_1.advancedPropertySearch],
+    modelSettings: {
+        temperature: 0.2,
+        maxTokens: 800,
     },
 });
 function parseDurationSeconds(text) {
@@ -340,91 +401,111 @@ async function runWorkflowFast(workflow) {
     // Fallback to accurate agent when heuristic match isn't strong
     return await runWorkflowAccurate(workflow);
 }
-// Main workflow entrypoint
-//uses two agents
-// export const runWorkflow = async (
-//   workflow: WorkflowInput
-// ): Promise<WorkflowResponse> => {
-//   if (!workflow.input_as_text) {
-//     throw new Error("input_as_text is required");
-//   }
-//   console.log(
-//     `[${new Date().toISOString()}] runWorkflow start with input_as_text:`,
-//     workflow.input_as_text
-//   );
-//   return await withTrace("Get Object ID", async () => {
-//     const conversationHistory: AgentInputItem[] = [
-//       {
-//         role: "user",
-//         content: [{ type: "input_text", text: workflow.input_as_text }],
-//       },
-//     ];
-//     const runner = new Runner({
-//       traceMetadata: {
-//         __trace_source__: "agent-builder",
-//         workflow_id: "wf_6933fd9bb1408190b6b3db91197666080ec54b08ff4c65cb",
-//       },
-//     });
-//     // Step 1: Extract property name and duration
-//     const extractpropertynameResultTemp = await runner.run(
-//       extractpropertyname,
-//       [...conversationHistory]
-//     );
-//     conversationHistory.push(
-//       ...extractpropertynameResultTemp.newItems.map((item) => item.rawItem)
-//     );
-//     if (!extractpropertynameResultTemp.finalOutput) {
-//       throw new Error("Agent result is undefined");
-//     }
-//     const extractpropertynameResult = {
-//       output_text: extractpropertynameResultTemp.finalOutput ?? "",
-//     };
-//     console.log(
-//       `[${new Date().toISOString()}] ExtractPropertyName output:`,
-//       extractpropertynameResult.output_text
-//     );
-//     // Push the extracted duration as a hard constraint before running PropertyAgent
-//     const parsedExtract = JSON.parse(extractpropertynameResult.output_text);
-//     const durationSeconds = parsedExtract.duration;
-//     conversationHistory.push({
-//       role: "system",
-//       content: [
-//         {
-//           type: "input_text",
-//           text: `Use this duration strictly: ${durationSeconds} seconds. Do not re-compute duration; reuse this value.`,
-//         },
-//       ],
-//     });
-//     // Step 2: Property agent using the generated query to search database
-//     const propertyAgentResultTemp = await runner.run(propertyAgent, [
-//       ...conversationHistory,
-//     ]);
-//     conversationHistory.push(
-//       ...propertyAgentResultTemp.newItems.map((item) => item.rawItem)
-//     );
-//     if (!propertyAgentResultTemp.finalOutput) {
-//       throw new Error("Agent result is undefined");
-//     }
-//     // Force the final duration to match the extracted duration
-//     let finalOutput = propertyAgentResultTemp.finalOutput ?? "";
-//     try {
-//       const parsedProperty = JSON.parse(finalOutput);
-//       parsedProperty.duration = durationSeconds;
-//       finalOutput = JSON.stringify(parsedProperty, null, 2);
-//     } catch (e) {
-//       // If parsing fails, keep original but note the issue
-//       console.error("Failed to enforce duration on property result:", e);
-//     }
-//     console.log(
-//       `[${new Date().toISOString()}] PropertyAgent output (duration enforced):`,
-//       finalOutput
-//     );
-//     // Return the property agent output with enforced duration
-//     return {
-//       output_text: finalOutput,
-//     };
-//   });
-// };
+//use runworkflow accurate v2
+//uses one agent
+async function runWorkflowFastV2(workflow) {
+    if (!workflow.input_as_text) {
+        throw new Error("input_as_text is required");
+    }
+    const startedAt = Date.now();
+    const transcript = workflow.input_as_text;
+    const duration = parseDurationSeconds(transcript) ?? 0;
+    const keyword = extractKeywordHeuristic(transcript);
+    // Always return a structured response quickly (no LLM) for consistent latency.
+    // If you need maximum accuracy, call /process/accurate instead.
+    if (!keyword) {
+        const output = {
+            obj: null,
+            objektname: null,
+            objekttypid: null,
+            duration,
+            confidence: "low",
+            reasoning: "Could not confidently extract a property keyword from transcript",
+            alternatives: [],
+        };
+        console.log(`[${new Date().toISOString()}] Fast workflow completed in ${Date.now() - startedAt}ms (no keyword)`);
+        return { output_text: JSON.stringify(output, null, 2) };
+    }
+    const search = await (0, db_tools_1.searchPropertyFuzzyNew)(keyword, 5);
+    const top = search.matches?.[0];
+    const topScore = Number(top?.combined_score ?? top?.db_score ?? 0);
+    const confidence = topScore >= 75 ? "high" : topScore >= 50 ? "medium" : "low";
+    const output = {
+        obj: top?.obj ?? null,
+        objektname: top?.objektname ?? null,
+        objekttypid: top?.objekttypid ?? null,
+        duration,
+        confidence,
+        reasoning: top
+            ? `Fast match on '${keyword}' (score ${topScore}, method ${search.search_method})`
+            : `No matches found for '${keyword}'`,
+        alternatives: (search.matches || []).map((m) => ({
+            obj: m.obj,
+            objektname: m.objektname,
+            objekttypid: m.objekttypid,
+            match_score: m.combined_score ?? m.db_score ?? 0,
+            match_type: m.match_type ?? "unknown",
+            confidence: m.confidence ?? "low",
+        })),
+    };
+    console.log(`[${new Date().toISOString()}] Fast workflow completed in ${Date.now() - startedAt}ms (keyword='${keyword}', topScore=${topScore})`);
+    return { output_text: JSON.stringify(output, null, 2) };
+}
+//use runworkflow smart
+async function runWorkflowHybrid(input) {
+    const start = Date.now();
+    const transcript = input.input_as_text;
+    // Quick extraction
+    const duration = (0, helper_1.parseDuration)(transcript);
+    const keyword = (0, helper_1.extractKeyword)(transcript);
+    if (!keyword) {
+        // Fall back to LLM for complex cases
+        console.log(`[${new Date().toISOString()}] No keyword found, using LLM...`);
+        return runWorkflowAccurate(input);
+    }
+    const search = await (0, db_tools_1.searchPropertyFuzzyNew)(keyword, 5);
+    const topScore = search.matches[0]?.combined_score || 0;
+    // If high confidence, skip LLM
+    if (topScore >= 70) {
+        const top = search.matches[0];
+        const output = {
+            obj: top.obj,
+            objektname: top.objektname,
+            objekttypid: top.objekttypid,
+            duration,
+            confidence: "high",
+            reasoning: `Direct match for '${keyword}' (score: ${topScore})`,
+            alternatives: search.matches.slice(1, 5).map((m) => ({
+                obj: m.obj,
+                objektname: m.objektname,
+                objekttypid: m.objekttypid,
+                match_score: m.combined_score,
+                match_type: m.match_type,
+                confidence: m.confidence,
+            })),
+        };
+        console.log(`[${new Date().toISOString()}] Hybrid (fast path): ${Date.now() - start}ms`);
+        return { output_text: JSON.stringify(output, null, 2) };
+    }
+    // Medium/low confidence: use LLM to decide
+    console.log(`[${new Date().toISOString()}] Low confidence (${topScore}), using LLM...`);
+    return runWorkSmart(input);
+}
+async function runWorkSmart(input) {
+    const start = Date.now();
+    const runner = new agents_1.Runner();
+    const result = await runner.run(smartAgent, [
+        {
+            role: "user",
+            content: [{ type: "input_text", text: input.input_as_text }],
+        },
+    ]);
+    if (!result.finalOutput) {
+        throw new Error("Agent returned no output");
+    }
+    console.log(`[${new Date().toISOString()}] Accurate workflow: ${Date.now() - start}ms`);
+    return { output_text: result.finalOutput };
+}
 //uses one agent
 const runWorkflowOptimized = async (workflow) => {
     if (!workflow.input_as_text) {

@@ -34,6 +34,20 @@ app.post("/process", async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+app.post("/process/fastv2", async (req, res) => {
+    try {
+        const body = req.body;
+        if (!body.input_as_text) {
+            return res.status(400).json({ error: "input_as_text field is required" });
+        }
+        const result = await (0, workflow_1.runWorkflowFastV2)(body);
+        res.status(200).json({ success: true, result });
+    }
+    catch (err) {
+        console.error("Workflow execution failed:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
 // Explicit endpoints if you want to compare latency/accuracy
 app.post("/process/accurate", async (req, res) => {
     try {
@@ -56,6 +70,34 @@ app.post("/process/optimized", async (req, res) => {
             return res.status(400).json({ error: "input_as_text field is required" });
         }
         const result = await (0, workflow_1.runWorkflowOptimized)(body);
+        res.status(200).json({ success: true, result });
+    }
+    catch (err) {
+        console.error("Workflow execution failed:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+app.post("/process/hybrid", async (req, res) => {
+    try {
+        const body = req.body;
+        if (!body.input_as_text) {
+            return res.status(400).json({ error: "input_as_text field is required" });
+        }
+        const result = await (0, workflow_1.runWorkflowHybrid)(body);
+        res.status(200).json({ success: true, result });
+    }
+    catch (err) {
+        console.error("Workflow execution failed:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+app.post("/process/smart", async (req, res) => {
+    try {
+        const body = req.body;
+        if (!body.input_as_text) {
+            return res.status(400).json({ error: "input_as_text field is required" });
+        }
+        const result = await (0, workflow_1.runWorkSmart)(body);
         res.status(200).json({ success: true, result });
     }
     catch (err) {

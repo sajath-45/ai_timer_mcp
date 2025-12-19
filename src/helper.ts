@@ -73,8 +73,8 @@ export function extractKeywordHeuristic(text: string): string | null {
 
   // Prefer "in X", "at X", "property X"
   const m =
-    t.match(/\b(?:in|at)\s+([A-Za-zÀ-ÖØ-öø-ÿ0-9.\- ]{3,40})/i) ||
-    t.match(/\bproperty\s+([A-Za-zÀ-ÖØ-öø-ÿ0-9.\- ]{3,40})/i);
+    t.match(/\b(?:in|at)\s+([A-Za-zÃ€-Ã–Ã˜-Ã¶Ã¸-Ã¿0-9.\- ]{3,40})/i) ||
+    t.match(/\bproperty\s+([A-Za-zÃ€-Ã–Ã˜-Ã¶Ã¸-Ã¿0-9.\- ]{3,40})/i);
 
   if (m?.[1]) {
     // IMPORTANT: many properties include a number in the name (e.g. "Luzernweg 17").
@@ -99,7 +99,7 @@ export function extractKeywordHeuristic(text: string): string | null {
 export function normalizeText(text: string): string {
   return text
     .toLowerCase()
-    .replace(/[äöüß]/g, (m) => ({ ä: "a", ö: "o", ü: "u", ß: "ss" }[m] || m))
+    .replace(/[Ã¤Ã¶Ã¼ÃŸ]/g, (m) => ({ Ã¤: "a", Ã¶: "o", Ã¼: "u", ÃŸ: "ss" }[m] || m))
     .replace(/[^a-z0-9\s]/g, "")
     .replace(/\s+/g, " ")
     .trim();
@@ -136,7 +136,7 @@ export function extractKeyword(text: string): string | null {
 
   // Pattern: "working on X" or "at X"
   const match = cleaned.match(
-    /\b(?:on|at|in)\s+([A-Za-zÀ-ÿ0-9.\-\s]{3,30}?)(?:\s+for|\s+from|$)/i
+    /\b(?:on|at|in)\s+([A-Za-zÃ€-Ã¿0-9.\-\s]{3,30}?)(?:\s+for|\s+from|$)/i
   );
   if (match?.[1]) {
     return match[1]

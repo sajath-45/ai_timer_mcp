@@ -3,11 +3,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.parseDurationSeconds = parseDurationSeconds;
 exports.extractKeywordHeuristic = extractKeywordHeuristic;
 exports.normalizeText = normalizeText;
+exports.parseDuration = parseDuration;
+exports.extractKeyword = extractKeyword;
 function parseDurationSeconds(text) {
     const t = (text || "").toLowerCase();
     // Normalize common dash characters so time ranges parse reliably
     const normalized = t.replace(/[??]/g, "-");
-    const nt = normalizeText(text);
     // "from 4:30 to 5:30" / "4.30 to 5.30"
     const range = normalized.match(/(?:from\s*)?(\d{1,2})[.:](\d{2})\s*(?:to|-)\s*(\d{1,2})[.:](\d{2})/);
     if (range) {
@@ -25,141 +26,6 @@ function parseDurationSeconds(text) {
                 return end - start;
         }
     }
-    // German time ranges: "von acht uhr morgens bis halb eins", "von 8 uhr bis 12 30"
-    const deRange = nt.match(/\bvon\s+(.{1,40}?)\s+bis\s+(.{1,40}?)(?:\s+(?:in|bei|auf|an|um|im)\b|$)/);
-    if (deRange) {
-        const startPhrase = deRange[1].trim();
-        const endPhrase = deRange[2].trim();
-        const wordToHour = (w) => {
-            const map = {
-                null: NaN,
-                ein: 1,
-                eins: 1,
-                eine: 1,
-                zwei: 2,
-                drei: 3,
-                vier: 4,
-                funf: 5,
-                fuenf: 5,
-                sechs: 6,
-                sieben: 7,
-                acht: 8,
-                neun: 9,
-                zehn: 10,
-                elf: 11,
-                zwolf: 12,
-                zwoelf: 12,
-            };
-            if (w in map)
-                return map[w];
-            if (/^\d{1,2}$/.test(w))
-                return Number(w);
-            return null;
-        };
-        const parseGermanClock = (phrase) => {
-            const p = normalizeText(phrase);
-            const meridian = p.match(/\b(morgens|nachmittags|abends|nachts)\b/)?.[1] ?? null;
-            // Numeric: "8 uhr", "8 uhr 30", "8 30"
-            let m = p.match(/\b(\d{1,2})\s*(?:uhr)?\s*(\d{2})\b/);
-            if (m) {
-                let hh = Number(m[1]);
-                const mm = Number(m[2]);
-                if (Number.isFinite(hh) && Number.isFinite(mm) && mm >= 0 && mm <= 59) {
-                    if (meridian && (meridian === "nachmittags" || meridian === "abends") && hh < 12) {
-                        hh += 12;
-                    }
-                    if (hh >= 0 && hh <= 23)
-                        return hh * 60 + mm;
-                }
-            }
-            // "acht uhr"
-            m = p.match(/\b(\d{1,2})\s*uhr\b/);
-            if (m) {
-                let hh = Number(m[1]);
-                if (meridian && (meridian === "nachmittags" || meridian === "abends") && hh < 12) {
-                    hh += 12;
-                }
-                if (hh >= 0 && hh <= 23)
-                    return hh * 60;
-            }
-            // Word hours with optional "uhr": "acht uhr", "elf"
-            const firstWord = p.split(/\s+/)[0] || "";
-            // "halb X" => (X-1):30
-            m = p.match(/\bhalb\s+(\w+)\b/);
-            if (m) {
-                const h = wordToHour(m[1]);
-                if (h != null) {
-                    let hh = (h + 23) % 24; // h-1
-                    if (meridian && (meridian === "nachmittags" || meridian === "abends") && hh < 12) {
-                        hh += 12;
-                    }
-                    return hh * 60 + 30;
-                }
-            }
-            // "viertel nach X" => X:15
-            m = p.match(/\bviertel\s+nach\s+(\w+)\b/);
-            if (m) {
-                const h = wordToHour(m[1]);
-                if (h != null) {
-                    let hh = h % 24;
-                    if (meridian && (meridian === "nachmittags" || meridian === "abends") && hh < 12) {
-                        hh += 12;
-                    }
-                    return hh * 60 + 15;
-                }
-            }
-            // "viertel vor X" => (X-1):45
-            m = p.match(/\bviertel\s+vor\s+(\w+)\b/);
-            if (m) {
-                const h = wordToHour(m[1]);
-                if (h != null) {
-                    let hh = (h + 23) % 24;
-                    if (meridian && (meridian === "nachmittags" || meridian === "abends") && hh < 12) {
-                        hh += 12;
-                    }
-                    return hh * 60 + 45;
-                }
-            }
-            // "dreiviertel X" or "drei viertel X" => (X-1):45
-            m = p.match(/\b(?:dreiviertel|drei\s+viertel)\s+(\w+)\b/);
-            if (m) {
-                const h = wordToHour(m[1]);
-                if (h != null) {
-                    let hh = (h + 23) % 24;
-                    if (meridian && (meridian === "nachmittags" || meridian === "abends") && hh < 12) {
-                        hh += 12;
-                    }
-                    return hh * 60 + 45;
-                }
-            }
-            // Single word hour like "acht" or "elf" with optional "uhr" omitted
-            const h = wordToHour(firstWord);
-            if (h != null) {
-                let hh = h % 24;
-                if (meridian && (meridian === "nachmittags" || meridian === "abends") && hh < 12) {
-                    hh += 12;
-                }
-                return hh * 60;
-            }
-            return null;
-        };
-        const startMin = parseGermanClock(startPhrase);
-        const endMin = parseGermanClock(endPhrase);
-        if (startMin != null && endMin != null) {
-            let startSec = startMin * 60;
-            let endSec = endMin * 60;
-            // If end is before start, assume same-day rollover (common for "halb eins")
-            if (endSec < startSec) {
-                const endPlus12 = endSec + 12 * 3600;
-                endSec =
-                    endPlus12 >= startSec && endPlus12 <= 24 * 3600
-                        ? endPlus12
-                        : endSec + 24 * 3600;
-            }
-            if (endSec >= startSec)
-                return endSec - startSec;
-        }
-    }
     // "for 5 minutes" / "5 min" / "2 hours"
     const numUnit = t.match(/(\d+(?:\.\d+)?)\s*(seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h)\b/);
     if (numUnit) {
@@ -172,36 +38,6 @@ function parseDurationSeconds(text) {
         if (unit.startsWith("m"))
             return Math.round(value * 60);
         return Math.round(value);
-    }
-    // German word numbers for units: "sieben minuten", "acht stunden"
-    const deWordUnit = nt.match(/\b(ein|eins|eine|zwei|drei|vier|funf|fuenf|sechs|sieben|acht|neun|zehn|elf|zwolf|zwoelf)\s+(sekunden|sekunde|minuten|minute|stunden|stunde)\b/);
-    if (deWordUnit) {
-        const w = deWordUnit[1];
-        const unit = deWordUnit[2];
-        const map = {
-            ein: 1,
-            eins: 1,
-            eine: 1,
-            zwei: 2,
-            drei: 3,
-            vier: 4,
-            funf: 5,
-            fuenf: 5,
-            sechs: 6,
-            sieben: 7,
-            acht: 8,
-            neun: 9,
-            zehn: 10,
-            elf: 11,
-            zwolf: 12,
-            zwoelf: 12,
-        };
-        const value = map[w];
-        if (unit.startsWith("stund"))
-            return value * 3600;
-        if (unit.startsWith("minut"))
-            return value * 60;
-        return value;
     }
     // Basic word numbers: "five minutes"
     const wordNum = t.match(/\b(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\s+(seconds?|minutes?|hours?)\b/);
@@ -236,8 +72,8 @@ function extractKeywordHeuristic(text) {
         return null;
     const t = raw.replace(/\s+/g, " ");
     // Prefer "in X", "at X", "property X"
-    const m = t.match(/\b(?:in|at)\s+([A-Za-z�-��-��-�0-9.\- ]{3,40})/i) ||
-        t.match(/\bproperty\s+([A-Za-z�-��-��-�0-9.\- ]{3,40})/i);
+    const m = t.match(/\b(?:in|at)\s+([A-Za-zÀ-ÖØ-öø-ÿ0-9.\- ]{3,40})/i) ||
+        t.match(/\bproperty\s+([A-Za-zÀ-ÖØ-öø-ÿ0-9.\- ]{3,40})/i);
     if (m?.[1]) {
         // IMPORTANT: many properties include a number in the name (e.g. "Luzernweg 17").
         // Treat trailing numbers as part of the property name, not duration.
@@ -260,18 +96,46 @@ function extractKeywordHeuristic(text) {
 function normalizeText(text) {
     return text
         .toLowerCase()
-        // Replace common German characters with ASCII to make regex parsing easier and deterministic.
-        // Use explicit Unicode escapes to avoid editor/encoding issues.
-        .replace(/[\u00e4\u00f6\u00fc\u00df]/g, (m) => {
-        const map = {
-            "\u00e4": "a", // �
-            "\u00f6": "o", // �
-            "\u00fc": "u", // �
-            "\u00df": "ss", // �
-        };
-        return map[m] ?? m;
-    })
+        .replace(/[äöüß]/g, (m) => ({ ä: "a", ö: "o", ü: "u", ß: "ss" }[m] || m))
         .replace(/[^a-z0-9\s]/g, "")
         .replace(/\s+/g, " ")
         .trim();
+}
+function parseDuration(text) {
+    const t = text.toLowerCase().normalize();
+    // Time range: "from 4:30 to 5:30"
+    const range = t.match(/(\d{1,2})[.:](\d{2})\s*(?:to|-|bis)\s*(\d{1,2})[.:](\d{2})/);
+    if (range) {
+        const start = Number(range[1]) * 3600 + Number(range[2]) * 60;
+        const end = Number(range[3]) * 3600 + Number(range[4]) * 60;
+        return end >= start ? end - start : 0;
+    }
+    // Direct time: "87 minutes and 3 seconds"
+    let total = 0;
+    const hours = t.match(/(\d+)\s*(?:hours?|hrs?|h\b)/);
+    const minutes = t.match(/(\d+)\s*(?:minutes?|mins?|m\b)/);
+    const seconds = t.match(/(\d+)\s*(?:seconds?|secs?|s\b)/);
+    if (hours)
+        total += Number(hours[1]) * 3600;
+    if (minutes)
+        total += Number(minutes[1]) * 60;
+    if (seconds)
+        total += Number(seconds[1]);
+    return total;
+}
+function extractKeyword(text) {
+    const cleaned = text.trim().replace(/\s+/g, " ");
+    // Pattern: "working on X" or "at X"
+    const match = cleaned.match(/\b(?:on|at|in)\s+([A-Za-zÀ-ÿ0-9.\-\s]{3,30}?)(?:\s+for|\s+from|$)/i);
+    if (match?.[1]) {
+        return match[1]
+            .trim()
+            .replace(/\s+\d+\s+(?:minutes?|seconds?|hours?).*$/i, "");
+    }
+    // Fallback: longest meaningful word
+    const words = cleaned
+        .replace(/[^\p{L}\p{N}\s.-]/gu, "")
+        .split(/\s+/)
+        .filter((w) => w.length >= 4 && !/^\d+$/.test(w));
+    return words.length > 0 ? words.sort((a, b) => b.length - a.length)[0] : null;
 }
