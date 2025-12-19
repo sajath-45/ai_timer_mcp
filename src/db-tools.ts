@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import { tool } from "@openai/agents";
 import { z } from "zod";
 import { compareTwoStrings } from "string-similarity";
+import { normalizeText } from "./helper";
 
 dotenv.config();
 
@@ -11,9 +12,10 @@ let cachedProperties: Array<{
   obj: string;
   objektname: string;
   objekttypid: number;
+  normalized: string; // Pre-normalized for faster matching
 }> = [];
 let lastCacheTime = 0;
-const CACHE_TTL = 300000; // 5 minutes
+const CACHE_TTL = 3600000; // 1 hour
 
 // Configure DB connection pool
 const db = mysql.createPool({
@@ -47,21 +49,23 @@ async function loadAllProperties() {
   const now = Date.now();
 
   if (cachedProperties.length > 0 && now - lastCacheTime < CACHE_TTL) {
-    console.log(`[${new Date().toISOString()}] Using cached properties`);
     return cachedProperties;
   }
 
-  console.log(
-    `[${new Date().toISOString()}] Loading all properties for fuzzy matching...`
-  );
+  console.log(`[${new Date().toISOString()}] Loading properties cache...`);
 
   const [rows] = await db.query(
     "SELECT obj, objektname, objekttypid FROM properties ORDER BY objektname"
   );
 
-  cachedProperties = Array.isArray(rows) ? (rows as any[]) : [];
-  lastCacheTime = now;
+  cachedProperties = (Array.isArray(rows) ? rows : []).map((row: any) => ({
+    obj: row.obj,
+    objektname: row.objektname,
+    objekttypid: row.objekttypid,
+    normalized: normalizeText(row.objektname),
+  }));
 
+  lastCacheTime = now;
   console.log(
     `[${new Date().toISOString()}] Cached ${cachedProperties.length} properties`
   );
@@ -272,6 +276,147 @@ export async function searchPropertyFuzzy(
     matches: enrichedDbMatches.slice(0, safeLimit),
     total_found: Math.min(enrichedDbMatches.length, safeLimit),
     search_method: "database_with_similarity",
+  };
+}
+
+export async function searchPropertyFuzzyNew(
+  query: string,
+  limit: number = 3
+): Promise<{
+  query: string;
+  matches: any[];
+  total_found: number;
+  search_method: string;
+}> {
+  const startedAt = Date.now();
+  const safeLimit = Math.max(1, Math.min(50, Number(limit) || 3));
+  const searchTerm = normalizeText(query);
+
+  if (!searchTerm) {
+    return {
+      query: String(query ?? ""),
+      matches: [],
+      total_found: 0,
+      search_method: "empty_query",
+    };
+  }
+
+  // Step 1: Try database exact/prefix matches first (fastest)
+  const [dbRows] = await db.query(
+    `
+    SELECT 
+      obj,
+      objektname,
+      objekttypid,
+      CASE 
+        WHEN LOWER(objektname) = ? THEN 100
+        WHEN LOWER(objektname) LIKE CONCAT(?, '%') THEN 90
+        WHEN LOWER(objektname) LIKE CONCAT('%', ?, '%') THEN 80
+        ELSE 50
+      END AS db_score
+    FROM properties
+    WHERE 
+      LOWER(objektname) LIKE CONCAT('%', ?, '%')
+    ORDER BY db_score DESC
+    LIMIT ?
+    `,
+    [searchTerm, searchTerm, searchTerm, searchTerm, safeLimit]
+  );
+
+  const dbMatches = Array.isArray(dbRows) ? (dbRows as any[]) : [];
+
+  // Step 2: Quick similarity scoring on DB results only
+  const scoredMatches = dbMatches.map((match) => {
+    const normalized = normalizeText(match.objektname);
+    const similarity = compareTwoStrings(searchTerm, normalized);
+
+    // Extract base name without numbers for better matching
+    const baseName = normalized.replace(/\s*\d+.*$/, "");
+    const queryBase = searchTerm.replace(/\s*\d+.*$/, "");
+    const baseMatch = compareTwoStrings(queryBase, baseName);
+
+    const combinedScore =
+      match.db_score * 0.4 + similarity * 100 * 0.35 + baseMatch * 100 * 0.25;
+
+    return {
+      obj: match.obj,
+      objektname: match.objektname,
+      objekttypid: match.objekttypid,
+      similarity_score: Math.round(similarity * 100),
+      base_match_score: Math.round(baseMatch * 100),
+      combined_score: Math.round(combinedScore),
+      match_type:
+        similarity > 0.8 ? "exact" : similarity > 0.6 ? "high" : "partial",
+      confidence:
+        combinedScore >= 75 ? "high" : combinedScore >= 50 ? "medium" : "low",
+    };
+  });
+
+  scoredMatches.sort((a, b) => b.combined_score - a.combined_score);
+
+  // Step 3: ONLY do full scan if NO good matches found
+  const bestScore = scoredMatches[0]?.combined_score || 0;
+
+  if (bestScore < 60 && scoredMatches.length < 3) {
+    console.log(
+      `[${new Date().toISOString()}] Low confidence (${bestScore}), doing cached scan...`
+    );
+
+    const allProperties = await loadAllProperties();
+
+    // Use pre-normalized cache for faster comparison
+    const allScored = allProperties.map((prop) => {
+      const similarity = compareTwoStrings(searchTerm, prop.normalized);
+
+      const baseName = prop.normalized.replace(/\s*\d+.*$/, "");
+      const queryBase = searchTerm.replace(/\s*\d+.*$/, "");
+      const baseMatch = compareTwoStrings(queryBase, baseName);
+
+      const combinedScore = similarity * 60 + baseMatch * 40;
+
+      return {
+        obj: prop.obj,
+        objektname: prop.objektname,
+        objekttypid: prop.objekttypid,
+        similarity_score: Math.round(similarity * 100),
+        base_match_score: Math.round(baseMatch * 100),
+        combined_score: Math.round(combinedScore),
+        match_type: similarity > 0.7 ? "high_similarity" : "fuzzy_match",
+        confidence:
+          combinedScore >= 60
+            ? "medium"
+            : combinedScore >= 40
+            ? "low"
+            : "very_low",
+      };
+    });
+
+    allScored.sort((a, b) => b.combined_score - a.combined_score);
+    const topMatches = allScored
+      .filter((m) => m.combined_score >= 30)
+      .slice(0, safeLimit);
+
+    console.log(
+      `[${new Date().toISOString()}] Full scan took ${Date.now() - startedAt}ms`
+    );
+
+    return {
+      query,
+      matches: topMatches,
+      total_found: topMatches.length,
+      search_method: "full_scan",
+    };
+  }
+
+  console.log(
+    `[${new Date().toISOString()}] DB search took ${Date.now() - startedAt}ms`
+  );
+
+  return {
+    query,
+    matches: scoredMatches.slice(0, safeLimit),
+    total_found: scoredMatches.length,
+    search_method: "database_optimized",
   };
 }
 

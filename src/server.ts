@@ -4,6 +4,9 @@ import {
   runWorkflowOptimized,
   runWorkflowAccurate,
   runWorkflowFast,
+  runWorkflowHybrid,
+  runWorkSmart,
+  runWorkflowFastV2,
 } from "./workflow"; // <-- IMPORTANT
 import { WorkflowInput } from "./types";
 import { warmPropertyCache } from "./db-tools";
@@ -41,6 +44,20 @@ app.post("/process", async (req: Request, res: Response) => {
   }
 });
 
+app.post("/process/fastv2", async (req: Request, res: Response) => {
+  try {
+    const body: WorkflowInput = req.body;
+    if (!body.input_as_text) {
+      return res.status(400).json({ error: "input_as_text field is required" });
+    }
+    const result = await runWorkflowFastV2(body);
+    res.status(200).json({ success: true, result });
+  } catch (err: any) {
+    console.error("Workflow execution failed:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Explicit endpoints if you want to compare latency/accuracy
 app.post("/process/accurate", async (req: Request, res: Response) => {
   try {
@@ -63,6 +80,34 @@ app.post("/process/optimized", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "input_as_text field is required" });
     }
     const result = await runWorkflowOptimized(body);
+    res.status(200).json({ success: true, result });
+  } catch (err: any) {
+    console.error("Workflow execution failed:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/process/hybrid", async (req: Request, res: Response) => {
+  try {
+    const body: WorkflowInput = req.body;
+    if (!body.input_as_text) {
+      return res.status(400).json({ error: "input_as_text field is required" });
+    }
+    const result = await runWorkflowHybrid(body);
+    res.status(200).json({ success: true, result });
+  } catch (err: any) {
+    console.error("Workflow execution failed:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/process/smart", async (req: Request, res: Response) => {
+  try {
+    const body: WorkflowInput = req.body;
+    if (!body.input_as_text) {
+      return res.status(400).json({ error: "input_as_text field is required" });
+    }
+    const result = await runWorkSmart(body);
     res.status(200).json({ success: true, result });
   } catch (err: any) {
     console.error("Workflow execution failed:", err);

@@ -11,11 +11,12 @@ const dotenv_1 = __importDefault(require("dotenv"));
 const agents_1 = require("@openai/agents");
 const zod_1 = require("zod");
 const string_similarity_1 = require("string-similarity");
+const helper_1 = require("./helper");
 dotenv_1.default.config();
 // Cache all properties for string similarity matching
 let cachedProperties = [];
 let lastCacheTime = 0;
-const CACHE_TTL = 300000; // 5 minutes
+const CACHE_TTL = 3600000; // 1 hour
 // Configure DB connection pool
 const db = promise_1.default.createPool({
     port: parseInt(process.env.MYSQL_PORT || "3306"),
@@ -39,12 +40,16 @@ db.getConnection()
 async function loadAllProperties() {
     const now = Date.now();
     if (cachedProperties.length > 0 && now - lastCacheTime < CACHE_TTL) {
-        console.log(`[${new Date().toISOString()}] Using cached properties`);
         return cachedProperties;
     }
-    console.log(`[${new Date().toISOString()}] Loading all properties for fuzzy matching...`);
+    console.log(`[${new Date().toISOString()}] Loading properties cache...`);
     const [rows] = await db.query("SELECT obj, objektname, objekttypid FROM properties ORDER BY objektname");
-    cachedProperties = Array.isArray(rows) ? rows : [];
+    cachedProperties = (Array.isArray(rows) ? rows : []).map((row) => ({
+        obj: row.obj,
+        objektname: row.objektname,
+        objekttypid: row.objekttypid,
+        normalized: (0, helper_1.normalizeText)(row.objektname),
+    }));
     lastCacheTime = now;
     console.log(`[${new Date().toISOString()}] Cached ${cachedProperties.length} properties`);
     return cachedProperties;
