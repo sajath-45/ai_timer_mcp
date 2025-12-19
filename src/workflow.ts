@@ -291,6 +291,72 @@ CRITICAL: Include ALL matches from search tool in alternatives array.`,
   },
 });
 
+// Dedicated agent for duration extraction only
+const durationExtractionAgent = new Agent({
+  name: "DurationExtractor",
+  instructions: `You are a duration extraction specialist. Your ONLY job is to extract the duration worked (in seconds) from a transcript.
+
+EXTRACTION RULES:
+1. Time ranges: Calculate the difference
+   - "from 4:30 to 5:30" = 1 hour = 3600 seconds
+   - "4.30 to 5.30" = 3600 seconds
+   - "2:15 to 3:45" = 1.5 hours = 5400 seconds
+   - "at 15:00?17:20" = 2h20m = 8400 seconds
+
+2. Direct duration expressions:
+   - "for 30 minutes" = 1800 seconds
+   - "45 minutes" = 2700 seconds
+   - "2 hours" = 7200 seconds
+   - "87 minutes and 3 seconds" = 5223 seconds
+   - "1.5 hours" = 5400 seconds
+
+3. Word numbers:
+   - "five minutes" = 300 seconds
+   - "two hours" = 7200 seconds
+   - "thirty minutes" = 1800 seconds
+
+4. German time expressions (CRITICAL):
+   - "von 8 Uhr bis 12:30" = 08:00 to 12:30 = 4h30m = 16200 seconds
+   - "von acht Uhr morgens bis halb eins" = 08:00 to 12:30 = 16200 seconds
+   - "von halb neun bis viertel nach zehn" = 08:30 to 10:15 = 6300 seconds
+   - "von viertel vor neun bis elf Uhr" = 08:45 to 11:00 = 8100 seconds
+   
+   German clock rules:
+   - "halb X" = 30 minutes before X (e.g., "halb zwei" = 01:30, "halb eins" = 12:30)
+   - "viertel nach X" = X:15
+   - "viertel vor X" = (X-1):45
+   - "morgens" = AM, "nachmittags/abends" = PM
+
+5. Edge cases:
+   - If no duration found, return 0
+   - If ambiguous, pick the most reasonable interpretation
+   - Ignore property names that might look like times (e.g., "Luzernweg 17" - 17 is part of property name, not duration)
+
+OUTPUT FORMAT (strict JSON only, no other text):
+{
+  "duration": <number in seconds>
+}
+
+Examples:
+Input: "worked at Trend property from 2:30 to 3:15"
+Output: {"duration": 2700}
+
+Input: "fixed AC for 45 minutes"
+Output: {"duration": 2700}
+
+Input: "von 8 Uhr bis 12:30"
+Output: {"duration": 16200}
+
+Input: "no time mentioned"
+Output: {"duration": 0}`,
+  model: "gpt-4o-mini",
+  modelSettings: {
+    temperature: 0.1, // Low temperature for consistent extraction
+    maxTokens: 200, // Small output, just a number
+    store: true,
+  },
+});
+
 function parseDurationSeconds(text: string): number | null {
   const t = (text || "").toLowerCase();
   const normalized = t.replace(/[??]/g, "-");
@@ -358,6 +424,40 @@ function parseDurationSeconds(text: string): number | null {
   return null;
 }
 
+/**
+ * Extract duration using the dedicated duration extraction agent.
+ * Falls back to parseDurationSeconds if agent fails.
+ */
+export async function extractDurationWithAgent(
+  transcript: string
+): Promise<number> {
+  try {
+    const runner = new Runner();
+    const result = await runner.run(durationExtractionAgent, [
+      {
+        role: "user",
+        content: [{ type: "input_text", text: transcript }],
+      },
+    ]);
+
+    if (result.finalOutput) {
+      // Parse JSON response
+      const parsed = JSON.parse(result.finalOutput);
+      if (typeof parsed.duration === "number" && parsed.duration >= 0) {
+        return parsed.duration;
+      }
+    }
+  } catch (error) {
+    console.warn(
+      `[${new Date().toISOString()}] Duration agent failed, falling back to regex:`,
+      error
+    );
+  }
+
+  // Fallback to regex-based parsing
+  return parseDurationSeconds(transcript) ?? 0;
+}
+
 function extractKeywordHeuristic(text: string): string | null {
   const raw = (text || "").trim();
   if (!raw) return null;
@@ -395,10 +495,18 @@ export async function runWorkflowFast(
   const startedAt = Date.now();
   const transcript = workflow.input_as_text;
 
-  const duration = parseDurationSeconds(transcript) ?? 0;
+  let duration = parseDurationSeconds(transcript) ?? 0;
   const keyword = extractKeywordHeuristic(transcript);
 
-  if (keyword) {
+  if (duration <= 0) {
+    duration = parseDuration(transcript);
+  }
+
+  if (duration <= 0) {
+    duration = await extractDurationWithAgent(transcript);
+  }
+
+  if (keyword && duration > 0) {
     const search = await searchPropertyFuzzy(keyword, 5);
     const top = search.matches?.[0];
     const topScore: number = Number(top?.combined_score ?? top?.db_score ?? 0);
