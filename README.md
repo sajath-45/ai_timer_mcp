@@ -27,6 +27,7 @@ Required environment variables:
 - `OPENAI_API_KEY`: Your OpenAI API key
 - `PORT`: Server port (default: 3000)
 - `ENABLE_MCP_HTTP`: Set to "true" to enable MCP HTTP support in Express server (optional)
+- `OPENAI_AGENTS_DISABLE_TRACING`: Set to "1" to disable OpenAI Agents SDK trace exporting (avoids `[non-fatal] Tracing: server error 503, retrying.` logs)
 
 ## Usage
 

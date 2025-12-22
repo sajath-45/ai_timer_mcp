@@ -195,9 +195,8 @@ async function searchPropertyFuzzy(query, limit = 3) {
         };
     }
     const tookMs = Date.now() - startedAt;
-    if (tookMs > 500) {
-        console.log(`[${new Date().toISOString()}] searchPropertyFuzzy(db) took ${tookMs}ms`);
-    }
+    console.log(`[${new Date().toISOString()}] searchPropertyFuzzy(db) took ${tookMs}ms`);
+    console.log("enrichedDbMatches:", enrichedDbMatches);
     return {
         query,
         matches: enrichedDbMatches.slice(0, safeLimit),
@@ -350,12 +349,14 @@ exports.getPropertyByIdTool = (0, agents_1.tool)({
     }),
     execute: async (input) => {
         try {
+            const startedAt = Date.now();
             const [rows] = await db.query("SELECT * FROM properties WHERE OBJ = ? LIMIT 1", [input.obj]);
             const resultRows = Array.isArray(rows) ? rows : [];
             const property = resultRows.length ? resultRows[0] : null;
             if (!property) {
                 return JSON.stringify({ property: null, message: "Property not found" }, null, 2);
             }
+            console.log(` getPropertyByIdTool completed in  in ${Date.now() - startedAt}ms:`, property);
             return JSON.stringify({ property }, null, 2);
         }
         catch (error) {
@@ -382,6 +383,7 @@ Returns top candidates with confidence scores and match details.`,
         try {
             console.log(`[${new Date().toISOString()}] Advanced fuzzy search:`, input.query);
             const result = await searchPropertyFuzzy(input.query, input.limit);
+            console.log(" searchPropertyFuzzy result:", result);
             return JSON.stringify(result, null, 2);
         }
         catch (error) {
@@ -398,20 +400,59 @@ exports.findPropertyTool = (0, agents_1.tool)({
         query: zod_1.z.string().describe("Property name or partial name to search for"),
     }),
     execute: async (input) => {
-        console.log("findPropertyTool input:", input);
+        const now = new Date();
+        const timeStr = now.toTimeString().split(" ")[0]; // Gets HH:MM:SS format
+        console.log(`findPropertyTool executing..., ${timeStr}`, input);
         try {
+            // const [rows] = await db.query(
+            const searchTerm = input.query;
             const [rows] = await db.query(`
-        SELECT 
-          obj, 
-          objektname, 
-          objekttypid,
-          CASE WHEN LOWER(objektname) LIKE CONCAT('%', LOWER(?), '%') THEN 1 ELSE 0 END AS partial_match,
-          CASE WHEN SOUNDEX(objektname) = SOUNDEX(?) THEN 1 ELSE 0 END AS phonetic_match
-        FROM properties
-        ORDER BY partial_match DESC, phonetic_match DESC
-        LIMIT 5
-        `, [input.query, input.query]);
+    SELECT 
+      obj,
+      objektname,
+      objekttypid,
+      CASE 
+        WHEN LOWER(objektname) = ? THEN 100
+        WHEN LOWER(objektname) LIKE CONCAT(?, '%') THEN 90
+        WHEN LOWER(objektname) LIKE CONCAT('%', ?, '%') THEN 80
+        WHEN SOUNDEX(objektname) = SOUNDEX(?) THEN 70
+        WHEN LOWER(objektname) REGEXP CONCAT('[[:<:]]', ?, '[[:>:]]') THEN 60
+        ELSE 50
+      END AS db_score,
+      CASE 
+        WHEN LOWER(objektname) = ? THEN 'exact'
+        WHEN LOWER(objektname) LIKE CONCAT(?, '%') THEN 'starts_with'
+        WHEN LOWER(objektname) LIKE CONCAT('%', ?, '%') THEN 'contains'
+        WHEN SOUNDEX(objektname) = SOUNDEX(?) THEN 'phonetic'
+        ELSE 'partial'
+      END AS match_type
+    FROM properties
+    WHERE 
+      LOWER(objektname) LIKE CONCAT('%', ?, '%')
+      OR SOUNDEX(objektname) = SOUNDEX(?)
+      OR LOWER(objektname) REGEXP CONCAT('[[:<:]]', ?, '[[:>:]]')
+    ORDER BY db_score DESC
+    LIMIT ?
+    `, [
+                searchTerm,
+                searchTerm,
+                searchTerm,
+                searchTerm,
+                searchTerm, // db_score checks
+                searchTerm,
+                searchTerm,
+                searchTerm,
+                searchTerm, // match_type checks
+                searchTerm,
+                searchTerm,
+                searchTerm, // WHERE clause
+                3,
+            ]);
             const resultRows = Array.isArray(rows) ? rows : [];
+            const now2 = new Date();
+            const timeStr2 = now2.toTimeString().split(" ")[0]; // Gets HH:MM:SS format
+            console.log("findPropertyTool result:", resultRows);
+            console.log(`findPropertyTool result... ${timeStr2}`);
             return JSON.stringify({ properties: resultRows }, null, 2);
         }
         catch (error) {

@@ -15,67 +15,10 @@ import {
 } from "./db-tools";
 import { z } from "zod";
 import { extractKeyword, parseDuration } from "./helper";
+import { extractDurationWithAgent } from "./workflow-new";
 
 // Tool definitions - using MCP database tools instead of file search
 const propertyTools = [findPropertyTool, getPropertyByIdTool];
-const fileSearch = fileSearchTool(["vs_693419a3ede081919076f91a5989958d"]);
-
-// Agents
-const extractpropertyname = new Agent({
-  name: "ExtractPropertyName",
-  instructions: `You will be given a transcript string describing work done at a property.
-Your tasks:
-1. Extract the property name or ID mentioned in the transcript.
-    Extract the most likely property name keyword.  
-    If the transcript uses generic words like "property", "building", "office", "apartment", "premises", etc., infer the keyword next to those words.
-
-    Examples:
-    "worked in trend property" -> "Trend"
-     "trend 40mins" -> "trend"
-    "fixed issue at the harmony building" -> "Harmony"
-    "checked the ac in blue tower apartment" -> "Blue Tower"
-    "visit to garden residence" -> "Garden Residence"
-
-    If multiple words seem like part of the property name, keep the full phrase.
-2. Extract the duration worked, in seconds.
-Duration may appear in different formats:
-- "120 seconds"
-- "for 30 minutes"
-- "for 2 hours"
-- "from 4:30 to 5:30"
-- "4.30 to 5.30"
-- "at 15:00?17:20"
-Rules for time range:
-- If a start and end time are provided, compute duration in seconds.
-- Time formats may vary (e.g., 4.30 = 4:30, 5.30 = 5:30).
-- When no meridian is provided (am/pm), assume same period.
-Return ONLY JSON in exactly this structure:
-{
-  "property": "<value or null>",
-  "duration": <number or null>,
-  "query": "Search the property list and return the record where Objektname best matches '<property>'. Return OBJ, Objektname, and ObjekttypID for that record."
-}
-Time calculation rules:
-- Hours ? seconds (1h = 3600s)
-- Minutes ? seconds (1m = 60s)
-- If either start or end time missing ? return null
-- If human-readable units are missing ? infer based on context
-Example transcript:
-"Today I worked on property ABC123 from 2:30 to 3:15 fixing issues"
-Expected:
-{
-  "property": "ABC123",
-  "duration": 2700,
-  "query": "Search the property list and return the record where Objektname best matches 'ABC123'. Return OBJ, Objektname, and ObjekttypID for that record."
-}`,
-  model: "gpt-4o-mini",
-  modelSettings: {
-    temperature: 1,
-    topP: 1,
-    maxTokens: 2048,
-    store: true,
-  },
-});
 
 const propertyAgent = new Agent({
   name: "PropertyAgent",
@@ -107,13 +50,6 @@ If no reasonable match, return null values.
     maxTokens: 2048,
     store: true,
   },
-});
-
-const jsonSchema = z.object({
-  obj: z.string(),
-  objektname: z.string(),
-  objekttypid: z.number(),
-  duration: z.number(),
 });
 
 const unifiedPropertyAgent = new Agent({
@@ -291,71 +227,134 @@ CRITICAL: Include ALL matches from search tool in alternatives array.`,
   },
 });
 
-// Dedicated agent for duration extraction only
-const durationExtractionAgent = new Agent({
-  name: "DurationExtractor",
-  instructions: `You are a duration extraction specialist. Your ONLY job is to extract the duration worked (in seconds) from a transcript.
+function parseGermanHourWordToNumber(raw: string): number | null {
+  const w = raw
+    .toLowerCase()
+    .trim()
+    .replace(/[.,;:!?"'()]/g, "")
+    .replace(/ä/g, "ae")
+    .replace(/ö/g, "oe")
+    .replace(/ü/g, "ue")
+    .replace(/ß/g, "ss");
 
-EXTRACTION RULES:
-1. Time ranges: Calculate the difference
-   - "from 4:30 to 5:30" = 1 hour = 3600 seconds
-   - "4.30 to 5.30" = 3600 seconds
-   - "2:15 to 3:45" = 1.5 hours = 5400 seconds
-   - "at 15:00?17:20" = 2h20m = 8400 seconds
+  const map: Record<string, number> = {
+    ein: 1,
+    eins: 1,
+    eine: 1,
+    zwei: 2,
+    drei: 3,
+    vier: 4,
+    fuenf: 5,
+    funf: 5,
+    sechs: 6,
+    sieben: 7,
+    acht: 8,
+    neun: 9,
+    zehn: 10,
+    elf: 11,
+    zwoelf: 12,
+    zwolf: 12,
+  };
 
-2. Direct duration expressions:
-   - "for 30 minutes" = 1800 seconds
-   - "45 minutes" = 2700 seconds
-   - "2 hours" = 7200 seconds
-   - "87 minutes and 3 seconds" = 5223 seconds
-   - "1.5 hours" = 5400 seconds
-
-3. Word numbers:
-   - "five minutes" = 300 seconds
-   - "two hours" = 7200 seconds
-   - "thirty minutes" = 1800 seconds
-
-4. German time expressions (CRITICAL):
-   - "von 8 Uhr bis 12:30" = 08:00 to 12:30 = 4h30m = 16200 seconds
-   - "von acht Uhr morgens bis halb eins" = 08:00 to 12:30 = 16200 seconds
-   - "von halb neun bis viertel nach zehn" = 08:30 to 10:15 = 6300 seconds
-   - "von viertel vor neun bis elf Uhr" = 08:45 to 11:00 = 8100 seconds
-   
-   German clock rules:
-   - "halb X" = 30 minutes before X (e.g., "halb zwei" = 01:30, "halb eins" = 12:30)
-   - "viertel nach X" = X:15
-   - "viertel vor X" = (X-1):45
-   - "morgens" = AM, "nachmittags/abends" = PM
-
-5. Edge cases:
-   - If no duration found, return 0
-   - If ambiguous, pick the most reasonable interpretation
-   - Ignore property names that might look like times (e.g., "Luzernweg 17" - 17 is part of property name, not duration)
-
-OUTPUT FORMAT (strict JSON only, no other text):
-{
-  "duration": <number in seconds>
+  return map[w] ?? null;
 }
 
-Examples:
-Input: "worked at Trend property from 2:30 to 3:15"
-Output: {"duration": 2700}
+function parseGermanTimeToMinutes(raw: string): number | null {
+  const s = (raw || "")
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, " ")
+    .replace(/ä/g, "ae")
+    .replace(/ö/g, "oe")
+    .replace(/ü/g, "ue")
+    .replace(/ß/g, "ss");
 
-Input: "fixed AC for 45 minutes"
-Output: {"duration": 2700}
+  // 8:15 / 8.15
+  const hm = s.match(/\b(\d{1,2})\s*[.:]\s*(\d{2})\b/);
+  if (hm) {
+    const h = Number(hm[1]);
+    const m = Number(hm[2]);
+    if (Number.isFinite(h) && Number.isFinite(m)) return h * 60 + m;
+  }
 
-Input: "von 8 Uhr bis 12:30"
-Output: {"duration": 16200}
+  // "halb neun" => 08:30 (30 minutes before 9)
+  const halb = s.match(/\bhalb\s+([a-z]+|\d{1,2})\b/);
+  if (halb) {
+    const hour = /^\d{1,2}$/.test(halb[1])
+      ? Number(halb[1])
+      : parseGermanHourWordToNumber(halb[1]);
+    if (hour) {
+      const prevHour = hour === 1 ? 12 : hour - 1;
+      return prevHour * 60 + 30;
+    }
+  }
 
-Input: "no time mentioned"
-Output: {"duration": 0}`,
-  model: "gpt-4o-mini",
-  modelSettings: {
-    temperature: 0.1, // Low temperature for consistent extraction
-    maxTokens: 200, // Small output, just a number
-    store: true,
-  },
-});
+  // "viertel nach zehn" => 10:15
+  const vNach = s.match(/\bviertel\s+nach\s+([a-z]+|\d{1,2})\b/);
+  if (vNach) {
+    const hour = /^\d{1,2}$/.test(vNach[1])
+      ? Number(vNach[1])
+      : parseGermanHourWordToNumber(vNach[1]);
+    if (hour) return hour * 60 + 15;
+  }
+
+  // "viertel vor zwoelf" => 11:45
+  const vVor = s.match(/\bviertel\s+vor\s+([a-z]+|\d{1,2})\b/);
+  if (vVor) {
+    const hour = /^\d{1,2}$/.test(vVor[1])
+      ? Number(vVor[1])
+      : parseGermanHourWordToNumber(vVor[1]);
+    if (hour) {
+      const prevHour = hour === 1 ? 12 : hour - 1;
+      return prevHour * 60 + 45;
+    }
+  }
+
+  // Approx phrases: "kurz nach eins" => 13:05-ish handled later with wrap logic; here we use +5 min
+  const kurzNach = s.match(/\bkurz\s+nach\s+([a-z]+|\d{1,2})\b/);
+  if (kurzNach) {
+    const hour = /^\d{1,2}$/.test(kurzNach[1])
+      ? Number(kurzNach[1])
+      : parseGermanHourWordToNumber(kurzNach[1]);
+    if (hour) return hour * 60 + 5;
+  }
+  const kurzVor = s.match(/\bkurz\s+vor\s+([a-z]+|\d{1,2})\b/);
+  if (kurzVor) {
+    const hour = /^\d{1,2}$/.test(kurzVor[1])
+      ? Number(kurzVor[1])
+      : parseGermanHourWordToNumber(kurzVor[1]);
+    if (hour) {
+      const prevHour = hour === 1 ? 12 : hour - 1;
+      return prevHour * 60 + 55; // ~5 minutes before the hour
+    }
+  }
+
+  // "acht uhr" / "8 uhr" / just "acht"
+  const uhr = s.match(/\b([a-z]+|\d{1,2})\s*uhr\b/);
+  const bare = s.match(/^\s*([a-z]+|\d{1,2})\s*$/);
+  const token = (uhr?.[1] ?? bare?.[1]) || null;
+  if (token) {
+    const hour = /^\d{1,2}$/.test(token)
+      ? Number(token)
+      : parseGermanHourWordToNumber(token);
+    if (hour != null) return hour * 60;
+  }
+
+  return null;
+}
+
+function computeRangeSecondsFromMinutes(
+  startMin: number,
+  endMin: number
+): number {
+  let end = endMin;
+  if (end < startMin) {
+    // Most common ambiguity is 12h wrap: "von zehn bis zwei" => 10:00?14:00
+    if (end + 12 * 60 >= startMin) end += 12 * 60;
+    else end += 24 * 60;
+  }
+  return (end - startMin) * 60;
+}
 
 function parseDurationSeconds(text: string): number | null {
   const t = (text || "").toLowerCase();
@@ -379,6 +378,17 @@ function parseDurationSeconds(text: string): number | null {
       const start = sh * 3600 + sm * 60;
       const end = eh * 3600 + em * 60;
       if (end >= start) return end - start;
+    }
+  }
+
+  // German time range: "von acht bis viertel vor zwölf"
+  const vonBis = t.match(/\bvon\s+(.+?)\s+bis\s+(.+?)(?:$|[.,;])/);
+  if (vonBis) {
+    const startMin = parseGermanTimeToMinutes(vonBis[1]);
+    const endMin = parseGermanTimeToMinutes(vonBis[2]);
+    if (startMin != null && endMin != null) {
+      const seconds = computeRangeSecondsFromMinutes(startMin, endMin);
+      if (seconds >= 0) return seconds;
     }
   }
 
@@ -428,36 +438,8 @@ function parseDurationSeconds(text: string): number | null {
  * Extract duration using the dedicated duration extraction agent.
  * Falls back to parseDurationSeconds if agent fails.
  */
-export async function extractDurationWithAgent(
-  transcript: string
-): Promise<number> {
-  try {
-    const runner = new Runner();
-    const result = await runner.run(durationExtractionAgent, [
-      {
-        role: "user",
-        content: [{ type: "input_text", text: transcript }],
-      },
-    ]);
 
-    if (result.finalOutput) {
-      // Parse JSON response
-      const parsed = JSON.parse(result.finalOutput);
-      if (typeof parsed.duration === "number" && parsed.duration >= 0) {
-        return parsed.duration;
-      }
-    }
-  } catch (error) {
-    console.warn(
-      `[${new Date().toISOString()}] Duration agent failed, falling back to regex:`,
-      error
-    );
-  }
-
-  // Fallback to regex-based parsing
-  return parseDurationSeconds(transcript) ?? 0;
-}
-
+//others
 function extractKeywordHeuristic(text: string): string | null {
   const raw = (text || "").trim();
   if (!raw) return null;
